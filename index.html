@@ -32,9 +32,9 @@
   <script>
   (function(){
     // ---------- CONFIG ----------
-    const SECRET_SEQUENCE = "67";  // key combo
-    const MODE = "replace";        // open in new tab
-    const TARGET_URL = "https://example.com"; // <--- change this to your link
+    const SECRET_SEQUENCE = "67";  // Key combo that triggers cloak
+    const MODE = "replace";        // "new-tab" or "replace"
+    const TARGET_URL = "https://example.com"; // <--- Change to your desired site
     const MAX_BUFFER = 20;
     const HIDE_AFTER_TRIGGER = true;
     // ----------------------------
@@ -42,24 +42,25 @@
     const buffer = [];
     const seq = SECRET_SEQUENCE.split('');
 
-    function normKey(k){ return k && k.length === 1 ? k.toLowerCase() : k.toLowerCase(); }
+    function normKey(k){ 
+      return k && k.length === 1 ? k.toLowerCase() : k.toLowerCase(); 
+    }
 
     function checkMatch(){
-      if(buffer.length < seq.length) return false;
-      for(let i=0;i<seq.length;i++){
-        if(buffer[buffer.length - seq.length + i] !== seq[i]) return false;
+      if (buffer.length < seq.length) return false;
+      for (let i = 0; i < seq.length; i++) {
+        if (buffer[buffer.length - seq.length + i] !== seq[i]) return false;
       }
       return true;
     }
 
-    function cloak(){
-      try{
-        if(MODE === "new-tab"){
-          // open about:blank first
+    function cloak() {
+      try {
+        if (MODE === "new-tab") {
+          // Open a new about:blank tab and cloak inside it
           const newTab = window.open("about:blank", "_blank");
-          if(newTab){
-            try{
-              // inject iframe that loads your target link
+          if (newTab) {
+            try {
               newTab.document.write(`
                 <!doctype html>
                 <html>
@@ -76,39 +77,59 @@
               `);
               newTab.document.close();
               newTab.focus();
-            }catch(e){
-              try{ newTab.location.href = TARGET_URL; }catch(e){}
+            } catch (e) {
+              try { newTab.location.href = TARGET_URL; } catch (e) {}
             }
           } else {
-            // popup blocked → fallback
             window.location.href = TARGET_URL;
           }
-        } else if(MODE === "replace"){
-          window.location.href = TARGET_URL;
+        } 
+        else if (MODE === "replace") {
+          // Replace current page content but keep about:blank cloak
+          const html = `
+            <!doctype html>
+            <html>
+            <head><meta charset="utf-8"><title> </title>
+              <style>
+                html,body{margin:0;height:100%;overflow:hidden;background:#000;}
+                iframe{border:0;width:100%;height:100%;}
+              </style>
+            </head>
+            <body>
+              <iframe src="${TARGET_URL}" allowfullscreen></iframe>
+            </body>
+            </html>
+          `;
+          document.open();
+          document.write(html);
+          document.close();
         }
 
-        if(HIDE_AFTER_TRIGGER){
+        if (HIDE_AFTER_TRIGGER) {
           document.documentElement.style.visibility = "hidden";
         }
-      }catch(err){
-        try{ window.location.href = TARGET_URL; }catch(e){}
+      } catch (err) {
+        try { window.location.href = TARGET_URL; } catch (e) {}
       }
     }
 
+    // Listen for the secret key combo
     window.addEventListener("keydown", function(e){
       const k = normKey(e.key);
       if(!k) return;
       buffer.push(k);
       if(buffer.length > MAX_BUFFER) buffer.shift();
+
       if(checkMatch()){
         cloak();
         buffer.length = 0;
       }
     }, {passive:true});
 
-    setTimeout(()=>{
-      const h=document.getElementById("hint");
-      if(h) h.style.display="none";
+    // Hide hint after a few seconds
+    setTimeout(() => {
+      const h = document.getElementById("hint");
+      if (h) h.style.display = "none";
     }, 3000);
   })();
   </script>
