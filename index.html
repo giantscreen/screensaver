@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Screen Saver</title>
 
-  <!-- Custom favicon -->
-  <link rel="icon" type="image/png" href="https://api.agilixbuzz.com/dlap.ashx?cmd=getresource&entityid=//anths&path=public/shadow/app/buzz/Echo_White_E_Black_72x72.png" />
+  <!-- ✅ Add your favicon here (place favicon.png next to index.html) -->
+  <link rel="icon" type="image/png" href="/favicon.png" />
 
   <style>
     html,body{
@@ -17,118 +17,101 @@
       font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
       -webkit-user-select:none;
       user-select:none;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      flex-direction:column;
     }
     #hint{
       position:fixed;
-      left:12px;
       bottom:12px;
-      color:#888;
+      left:12px;
+      color:#444;
       font-size:12px;
-      opacity:0.9;
+      opacity:0.8;
     }
   </style>
 </head>
 <body>
-  <div id="hint">Type your secret code...</div>
+  <div id="hint">Save your screen from falling asleep!</div>
 
   <script>
   (function(){
     // ---------- CONFIG ----------
-    // Code 1
-    const SECRET_1 = "67"; // first secret combo
-    const NEW_TAB_1 = "https://example.com"; // site to load in about:blank tab
-    const REPLACE_1 = "https://wwhs.echo-ntn.org/"; // site to show in this tab
-
-    // Code 2
-    const SECRET_2 = "420"; // second secret combo
-    const NEW_TAB_2 = "https://openai.com"; // site to load in about:blank tab
-    const REPLACE_2 = "https://wwhs.echo-ntn.org/"; // site to show in this tab
+    const SECRETS = {
+      "67": { // Secret #1 (example: press 6 then 7)
+        newTab: "https://example.com",
+        replace: "https://wwhs.echo-ntn.org/"
+      },
+      "123": { // Secret #2 (example: press 1 then 2 then 3)
+        newTab: "https://openai.com",
+        replace: "https://wwhs.echo-ntn.org/"
+      }
+    };
 
     const MAX_BUFFER = 20;
-    // ----------------------------
-
+    const HIDE_AFTER_TRIGGER = true;
     const buffer = [];
-    const sequences = [
-      { code: SECRET_1.split(""), newTab: NEW_TAB_1, replace: REPLACE_1 },
-      { code: SECRET_2.split(""), newTab: NEW_TAB_2, replace: REPLACE_2 },
-    ];
 
     function normKey(k){
-      return k && k.length === 1 ? k.toLowerCase() : k.toLowerCase();
+      if(!k) return '';
+      return k.length === 1 ? k.toLowerCase() : k.toLowerCase();
     }
 
-    function checkMatch(seq){
-      if(buffer.length < seq.length) return false;
-      for(let i=0;i<seq.length;i++){
-        if(buffer[buffer.length - seq.length + i] !== seq[i]) return false;
-      }
-      return true;
-    }
-
-    // Opens a cloaked about:blank tab with an iframe to the target
-    function openCloakedNewTab(target){
-      try {
-        const newTab = window.open('about:blank', '_blank');
-        if(!newTab){
-          // Fallback if popup blocked
-          window.open(target, '_blank');
-          return;
+    function checkSecrets(){
+      for(const code in SECRETS){
+        const seq = code.split('');
+        if(buffer.length < seq.length) continue;
+        let match = true;
+        for(let i=0;i<seq.length;i++){
+          if(buffer[buffer.length - seq.length + i] !== seq[i]){
+            match = false; break;
+          }
         }
-        newTab.document.write(`<!doctype html>
-          <html>
-            <head><meta charset="utf-8">
-              <meta name="viewport" content="width=device-width,initial-scale=1" />
-              <title></title>
-              <style>
-                html,body{margin:0;height:100%;overflow:hidden;background:#000}
-                iframe{border:0;width:100%;height:100%}
-              </style>
-            </head>
-            <body>
-              <iframe src="${target}" allowfullscreen sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe>
-            </body>
-          </html>`);
-        newTab.document.close();
-        newTab.focus();
-      } catch (e) {
-        // If writing fails, open directly
-        window.open(target, '_blank');
+        if(match) return SECRETS[code];
       }
+      return null;
     }
 
-    // Replace this tab with the specified URL
-    function replaceThisTab(target){
+    function trigger(secret){
       try {
-        location.replace(target);
-      } catch {
-        location.assign(target);
+        // Open in new about:blank tab
+        const newTab = window.open('about:blank', '_blank');
+        if(newTab && secret.newTab){
+          try {
+            newTab.location.href = secret.newTab;
+          } catch (e) {}
+        }
+        // Optionally hide screen quickly
+        if(HIDE_AFTER_TRIGGER){
+          document.documentElement.style.visibility = 'hidden';
+        }
+        // Replace current page
+        if(secret.replace){
+          setTimeout(()=>{ window.location.href = secret.replace; }, 400);
+        }
+      } catch (err) {
+        console.error(err);
       }
     }
 
-    // Trigger when any code matches
-    function triggerAction(code){
-      openCloakedNewTab(code.newTab);
-      setTimeout(() => replaceThisTab(code.replace), 50);
-    }
-
-    // Listen for typing
-    window.addEventListener("keydown", function(e){
+    window.addEventListener('keydown', e => {
       const k = normKey(e.key);
       if(!k) return;
       buffer.push(k);
       if(buffer.length > MAX_BUFFER) buffer.shift();
-
-      for(const code of sequences){
-        if(checkMatch(code.code)){
-          triggerAction(code);
-          buffer.length = 0;
-          break;
-        }
+      const secret = checkSecrets();
+      if(secret){
+        trigger(secret);
+        buffer.length = 0;
       }
     }, {passive:true});
 
-    // Hide hint after a few seconds
-    setTimeout(()=>{ const h=document.getElementById('hint'); if(h) h.style.display='none'; }, 3500);
+    // Hide the hint after a few seconds
+    setTimeout(()=>{
+      const h=document.getElementById('hint');
+      if(h) h.style.display='none';
+    },3000);
   })();
   </script>
 </body>
