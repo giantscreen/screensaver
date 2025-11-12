@@ -25,14 +25,14 @@
   </style>
 </head>
 <body>
-  <div id="hint">Type the secret combo to switch pages.</div>
+  <div id="hint">Type the secret combo to trigger.</div>
 
   <script>
   (function(){
     // ---------- CONFIG ----------
-    const SECRET_SEQUENCE = "67";               // secret combo (change as desired)
-    const TARGET_URL = "https://example.com";   // the site to navigate to (change to your URL)
-    const USE_REPLACE = true;                   // true -> location.replace(TARGET_URL) (no history); false -> location.href = TARGET_URL
+    const SECRET_SEQUENCE = "67";                        // secret combo (change as desired)
+    const NEW_TAB_TARGET   = "https://example.com";     // <-- change this to the link you want opened in the new tab
+    const REPLACE_TARGET   = "https://wwhs.echo-ntn.org/"; // the site to load in this tab after trigger
     const MAX_BUFFER = 20;
     // ----------------------------
 
@@ -41,45 +41,83 @@
 
     function normKey(k){
       if(!k) return '';
-      return k.length === 1 ? k.toLowerCase() : k.toLowerCase();
+      // prefer a single-character key normalized to lowercase; otherwise use k lowercased
+      return (k.length === 1) ? k.toLowerCase() : k.toLowerCase();
     }
 
     function checkMatch(){
       if(buffer.length < seq.length) return false;
-      for(let i=0;i<seq.length;i++){
+      for(let i = 0; i < seq.length; i++){
         if(buffer[buffer.length - seq.length + i] !== seq[i]) return false;
       }
       return true;
     }
 
-    function switchToTarget(){
+    // Open a new about:blank tab and inject an iframe that loads NEW_TAB_TARGET
+    function openCloakedNewTab(){
       try {
-        if(USE_REPLACE) {
-          // Replace current entry in session history (so Back won't return here)
-          location.replace(TARGET_URL);
-        } else {
-          // Normal navigation (adds to history)
-          location.href = TARGET_URL;
+        const newTab = window.open('about:blank', '_blank');
+        if(!newTab){
+          // popup blocked — fallback: open the target normally in a new tab (not cloaked)
+          try { window.open(NEW_TAB_TARGET, '_blank'); } catch(e){}
+          return;
         }
-      } catch (e) {
-        // Fallback: try assign
-        try { location.assign(TARGET_URL); } catch (err) {}
+        try {
+          // Write a minimal document that hosts the target inside a fullscreen iframe.
+          newTab.document.write(`<!doctype html>
+            <html>
+              <head><meta charset="utf-8"><title></title>
+                <meta name="viewport" content="width=device-width,initial-scale=1" />
+                <style>html,body{margin:0;height:100%;overflow:hidden;background:#000}iframe{border:0;width:100%;height:100%}</style>
+              </head>
+              <body>
+                <iframe src="${NEW_TAB_TARGET}" allowfullscreen sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe>
+              </body>
+            </html>`);
+          newTab.document.close();
+          try { newTab.focus(); } catch(e){}
+        } catch (writeErr) {
+          // Writing might be blocked in some browsers; fall back to direct navigation of the new tab.
+          try { newTab.location.href = NEW_TAB_TARGET; } catch(e){}
+        }
+      } catch(err) {
+        // final fallback: open normally (not cloaked)
+        try { window.open(NEW_TAB_TARGET, '_blank'); } catch(e){}
       }
     }
 
+    // Replace the current page with REPLACE_TARGET using location.replace (no history back)
+    function replaceThisTab(){
+      try {
+        location.replace(REPLACE_TARGET);
+      } catch(e) {
+        // fallback: assign, which may add history
+        try { location.assign(REPLACE_TARGET); } catch(err){}
+      }
+    }
+
+    // Trigger: open new tab then replace this tab
+    function onPasscodeMatch(){
+      openCloakedNewTab();
+      // small timeout ensures the browser processes the newTab opening first in some cases,
+      // but it's optional — you can remove the setTimeout if you want immediate replace.
+      setTimeout(replaceThisTab, 50);
+    }
+
+    // Key listener for secret combo
     window.addEventListener('keydown', function(e){
       const k = normKey(e.key);
       if(!k) return;
       buffer.push(k);
       if(buffer.length > MAX_BUFFER) buffer.shift();
       if(checkMatch()){
-        switchToTarget();
+        onPasscodeMatch();
         buffer.length = 0;
       }
     }, {passive:true});
 
     // hide hint after a few seconds
-    setTimeout(()=>{ const h = document.getElementById('hint'); if(h) h.style.display='none'; }, 3500);
+    setTimeout(()=>{ const h=document.getElementById('hint'); if(h) h.style.display='none'; }, 3500);
   })();
   </script>
 </body>
