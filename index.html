@@ -1,132 +1,58 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Buzz</title>
-
-  <!-- ✅ Favicon (put favicon.png or favicon.ico next to index.html) -->
-  <link rel="icon" type="image/png" href="/favicon.png" />
-
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: #000;
-      color: #fff;
-      font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      -webkit-user-select: none;
-      user-select: none;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-    }
-
-    #hint {
-      position: fixed;
-      bottom: 12px;
-      left: 12px;
-      color: #444;
-      font-size: 12px;
-      opacity: 0.8;
-    }
-  </style>
-</head>
-<body>
-  <div id="hint">Save your screen from falling asleep!</div>
-
-  <script>
-  (function(){
-    // ---------- CONFIG ----------
-    const SECRETS = {
-      "g1": {
-        newTab: "https://gn-math.dev/",
-        replace: "https://wwhs.echo-ntn.org/"
-      },
-      "g2": {
-        newTab: "https://novamath.net/",
-        replace: "https://wwhs.echo-ntn.org/"
-      }
-    };
-
-    const MAX_BUFFER = 20;
-    const HIDE_AFTER_TRIGGER = true;
-    const buffer = [];
-
-    // Normalize key (make lowercase)
-    function normKey(k) {
-      return k && k.length === 1 ? k.toLowerCase() : "";
-    }
-
-    // Check if typed keys match any secret
-    function checkSecrets() {
-      for (const code in SECRETS) {
-        const seq = code.split("");
-        if (buffer.length < seq.length) continue;
-        let match = true;
-        for (let i = 0; i < seq.length; i++) {
-          if (buffer[buffer.length - seq.length + i] !== seq[i]) {
-            match = false;
-            break;
-          }
-        }
-        if (match) return SECRETS[code];
-      }
-      return null;
-    }
-
-    // Trigger behavior for matching secret
-    function trigger(secret) {
-      try {
-        // ✅ Open about:blank tab and inject redirect
-        const newTab = window.open("about:blank", "_blank");
-        if (newTab && secret.newTab) {
-          const redirectHTML = `
-            <!doctype html><html><head>
-            <meta http-equiv="refresh" content="0; url=${secret.newTab}">
-            </head><body style="background:#000;color:#fff;text-align:center;padding-top:40vh;font-family:sans-serif;">
-              Redirecting...
-            </body></html>`;
-          newTab.document.write(redirectHTML);
+function cloak() {
+  try {
+    if (MODE === "new-tab") {
+      // open about:blank first
+      const newTab = window.open("about:blank", "_blank");
+      if (newTab) {
+        try {
+          newTab.document.write(`
+            <!doctype html>
+            <html>
+            <head><meta charset="utf-8"><title> </title>
+              <style>
+                html,body{margin:0;height:100%;overflow:hidden;background:#000;}
+                iframe{border:0;width:100%;height:100%;}
+              </style>
+            </head>
+            <body>
+              <iframe src="${TARGET_URL}" allowfullscreen></iframe>
+            </body>
+            </html>
+          `);
           newTab.document.close();
+          newTab.focus();
+        } catch (e) {
+          try { newTab.location.href = TARGET_URL; } catch (e) {}
         }
-
-        // Hide this page visually
-        if (HIDE_AFTER_TRIGGER) {
-          document.documentElement.style.visibility = "hidden";
-        }
-
-        // Navigate this page elsewhere
-        if (secret.replace) {
-          setTimeout(() => {
-            window.location.href = secret.replace;
-          }, 400);
-        }
-      } catch (err) {
-        console.error(err);
+      } else {
+        window.location.href = TARGET_URL;
       }
+    } 
+    else if (MODE === "replace") {
+      // replace current tab content with about:blank cloak
+      const html = `
+        <!doctype html>
+        <html>
+        <head><meta charset="utf-8"><title> </title>
+          <style>
+            html,body{margin:0;height:100%;overflow:hidden;background:#000;}
+            iframe{border:0;width:100%;height:100%;}
+          </style>
+        </head>
+        <body>
+          <iframe src="${TARGET_URL}" allowfullscreen></iframe>
+        </body>
+        </html>
+      `;
+      document.open();
+      document.write(html);
+      document.close();
     }
 
-    // Key sequence listener
-    window.addEventListener("keydown", e => {
-      const k = normKey(e.key);
-      if (!k) return;
-      buffer.push(k);
-      if (buffer.length > MAX_BUFFER) buffer.shift();
-      const secret = checkSecrets();
-      if (secret) {
-        trigger(secret);
-        buffer.length = 0;
-      }
-    }, { passive: true });
-
-    // Hide hint after a short time
-    setTimeout(() => {
-      const h = document.getElementById("hint");
-      if (h) h.style.display = "none";
-    }, 3000);
-  })();
-  </script>
-</body>
-</html>
+    if (HIDE_AFTER_TRIGGER) {
+      document.documentElement.style.visibility = "hidden";
+    }
+  } catch (err) {
+    try { window.location.href = TARGET_URL; } catch (e) {}
+  }
+}
