@@ -45,27 +45,19 @@
     animation: pulse 6s infinite alternate ease-in-out;
   }
   @keyframes pulse {
-    0%{filter:blur(0px) brightness(1);}
-    100%{filter:blur(20px) brightness(1.8);}
+    0%{filter:blur(0px) brightness(1);}100%{filter:blur(20px) brightness(1.8);}
   }
   .mode2{
     background: linear-gradient(45deg,#00f,#0ff,#0f0,#ff0,#f00);
     background-size:400% 400%;
     animation: shift 10s infinite linear;
   }
-  @keyframes shift{
-    0%{background-position:0% 0%;}
-    50%{background-position:100% 100%;}
-    100%{background-position:0% 0%;}
-  }
+  @keyframes shift{0%{background-position:0% 0%;}50%{background-position:100% 100%;}100%{background-position:0% 0%;}}
   .mode3{
     background:conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);
     animation: spin 12s infinite linear;
   }
-  @keyframes spin{
-    0%{transform:rotate(0deg);}
-    100%{transform:rotate(360deg);}
-  }
+  @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -81,81 +73,60 @@
     { code: "g2", newTab: "https://novamath.net/" },
     { code: "g3", newTab: "https://kbhgames.com/" }
   ];
-
   const REPLACEMENTS = [
     "https://www.clever.com",
     "https://wwhs.echo-ntn.org",
     "about:blank"
   ];
-
   function mapTitle(url){
     if(url === "https://www.clever.com") return "Clever";
     if(url === "https://wwhs.echo-ntn.org") return "Buzz";
     if(url === "about:blank") return "about:blank";
     return "Redirecting";
   }
-
   let i = parseInt(localStorage.getItem("selectedLinkIndex")) || 0;
   let REPLACE_TARGET = REPLACEMENTS[i];
-
   const indicator = document.getElementById('linkIndicator');
   indicator.textContent = REPLACE_TARGET;
   document.title = mapTitle(REPLACE_TARGET);
-
   const saver = document.getElementById("screensaver");
   const modes = ["mode1","mode2","mode3"];
   let modeIndex = 0;
   let active = false;
-
-  function enableScreensaver(){
-    active = true;
-    saver.className = modes[modeIndex];
-  }
-  function disableScreensaver(){
-    active = false;
-    saver.className = "";
-    saver.style.background = "#000";
-  }
+  function enableScreensaver(){ active = true; saver.className = modes[modeIndex]; }
+  function disableScreensaver(){ active = false; saver.className = ""; saver.style.background = "#000"; }
   disableScreensaver();
-
-  function cycleMode(){
-    if(!active) return;
-    saver.classList.remove(modes[modeIndex]);
-    modeIndex = (modeIndex+1) % modes.length;
-    saver.classList.add(modes[modeIndex]);
-  }
+  function cycleMode(){ if(!active) return; saver.classList.remove(modes[modeIndex]); modeIndex = (modeIndex+1) % modes.length; saver.classList.add(modes[modeIndex]); }
   setInterval(cycleMode, 8000);
-
   const buffer = [];
-  const MAX_BUFFER = 20;
+  const MAX_BUFFER = 40;
   function norm(k){ return k ? k.toLowerCase() : ""; }
-
   function findSecret(){
     for(const s of SECRETS){
       const seq = s.code.split("");
       if(buffer.length < seq.length) continue;
       let ok = true;
       for(let j=0;j<seq.length;j++){
-        if(buffer[buffer.length-seq.length+j] !== seq[j]){
-          ok=false; break;
-        }
+        if(buffer[buffer.length - seq.length + j] !== seq[j]){ ok=false; break; }
       }
       if(ok) return s;
     }
     return null;
   }
-
+  function checkSaverSequence(){
+    const seq = "saver".split("");
+    if(buffer.length < seq.length) return false;
+    for(let j=0;j<seq.length;j++){
+      if(buffer[buffer.length - seq.length + j] !== seq[j]) return false;
+    }
+    return true;
+  }
   function openCloakedTab(target){
     let tab = null;
     try{
       tab = window.open("about:blank","_blank");
       if(!tab){ window.open(target,"_blank"); return; }
-      const html = `
-      <!doctype html><html><head><meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      <style>html,body{margin:0;height:100%;background:#000}
-      iframe{border:0;width:100%;height:100%}</style></head>
-      <body><iframe src="${target}" sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe></body></html>`;
+      const html = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;height:100%;background:#000}iframe{border:0;width:100%;height:100%}</style></head><body><iframe src="'+target+'" sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe></body></html>';
       tab.document.open();
       tab.document.write(html);
       tab.document.close();
@@ -163,23 +134,14 @@
       window.open(target,"_blank");
     }
   }
-
   function trigger(secret){
     if(secret && secret.newTab) openCloakedTab(secret.newTab);
     document.documentElement.style.visibility = "hidden";
     setTimeout(()=>location.replace(REPLACE_TARGET),250);
   }
-
   window.addEventListener("keydown", e=>{
     const k = norm(e.key);
     if(!k) return;
-
-    if(k === "]"){
-      if(active) disableScreensaver();
-      else enableScreensaver();
-      return;
-    }
-
     if(k === "l"){
       i = (i + 1) % REPLACEMENTS.length;
       localStorage.setItem("selectedLinkIndex", i);
@@ -188,21 +150,20 @@
       document.title = mapTitle(REPLACE_TARGET);
       return;
     }
-
     buffer.push(k);
     if(buffer.length > MAX_BUFFER) buffer.shift();
-
-    const secret = findSecret();
-    if(secret){
-      trigger(secret);
+    if(checkSaverSequence()){
+      if(active) disableScreensaver(); else enableScreensaver();
+      buffer.length = 0;
+      return;
+    }
+    const match = findSecret();
+    if(match){
+      trigger(match);
       buffer.length = 0;
     }
   });
-
-  setTimeout(()=>{
-    const h = document.getElementById("hint");
-    if(h) h.style.display = "none";
-  },3500);
+  setTimeout(()=>{ const h = document.getElementById("hint"); if(h) h.style.display = "none"; },3500);
 })();
 </script>
 
