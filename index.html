@@ -7,74 +7,40 @@
 <link rel="icon" type="image/png" href="/favicon.png" />
 <style>
   html,body{
-    height:100%;
     margin:0;
+    height:100%;
     background:#000;
     overflow:hidden;
-    user-select:none;
-    font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;
     color:#fff;
   }
   #hint{
     position:fixed;
-    left:12px;
     bottom:12px;
-    color:#aaa;
+    left:12px;
+    color:#888;
     font-size:12px;
-    opacity:0.85;
     z-index:3;
   }
   #linkIndicator{
     position:fixed;
-    right:6px;
     bottom:4px;
-    font-size:9px;
-    color:#222;
-    opacity:0.6;
-    pointer-events:none;
+    right:8px;
+    font-size:10px;
+    color:#444;
     z-index:3;
   }
-  #screensaver{
+  #screensaverCanvas{
     position:fixed;
-    top:0;
-    left:0;
-    width:100vw;
-    height:100vh;
+    top:0;left:0;
+    width:100vw;height:100vh;
     z-index:1;
-    display:none;
+    opacity:0;
+    transition:opacity 2.5s ease;
+    pointer-events:none;
   }
-  .mode1{
-    background: radial-gradient(circle at center, #ff00ff, #000);
-    animation: pulse 6s infinite alternate ease-in-out;
-  }
-  @keyframes pulse {
-    0%{filter:blur(0px) brightness(1);}
-    100%{filter:blur(20px) brightness(1.8);}
-  }
-  .mode2{
-    background: linear-gradient(45deg,#00f,#0ff,#0f0,#ff0,#f00);
-    background-size:400% 400%;
-    animation: shift 10s infinite linear;
-  }
-  @keyframes shift{
-    0%{background-position:0% 0%;}
-    50%{background-position:100% 100%;}
-    100%{background-position:0% 0%;}
-  }
-  .mode3{
-    background:conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);
-    animation: spin 12s infinite linear;
-  }
-  @keyframes spin{
-    0%{transform:rotate(0deg);}
-    100%{transform:rotate(360deg);}
-  }
-  canvas{
-    position:absolute;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
+  #screensaverCanvas.active{
+    opacity:1;
   }
 </style>
 </head>
@@ -82,184 +48,217 @@
 
 <div id="hint">Saving your screen from falling asleep!</div>
 <div id="linkIndicator"></div>
-<div id="screensaver"></div>
+<canvas id="screensaverCanvas"></canvas>
 
 <script>
 (function(){
-
-  const SECRETS = [
-    { code: "g1", newTab: "https://gn-math.dev/" },
-    { code: "g2", newTab: "https://novamath.net/" },
-    { code: "g3", newTab: "https://kbhgames.com/" }
-  ];
-
   const REPLACEMENTS = [
-    "https://www.clever.com",
-    "https://wwhs.echo-ntn.org",
-    "about:blank"
+    { url:"https://www.clever.com", title:"Clever" },
+    { url:"https://wwhs.echo-ntn.org", title:"Buzz" },
+    { url:"about:blank", title:"about:blank" }
   ];
 
-  function mapTitle(url){
-    if(url === "https://www.clever.com") return "Clever";
-    if(url === "https://wwhs.echo-ntn.org") return "Buzz";
-    if(url === "about:blank") return "about:blank";
-    return "Redirecting";
-  }
+  const SECRETS = ["g1","g2","g3","saver"]; // saver toggles screensaver
+  const maps = { g1:"https://gn-math.dev/", g2:"https://novamath.net/", g3:"https://kbhgames.com/" };
 
-  let i = parseInt(localStorage.getItem("selectedLinkIndex")) || 0;
-  let REPLACE_TARGET = REPLACEMENTS[i];
-
+  const canvas = document.getElementById('screensaverCanvas');
+  const ctx = canvas.getContext('2d');
   const indicator = document.getElementById('linkIndicator');
+  const hint = document.getElementById('hint');
+
+  let index = parseInt(localStorage.getItem('linkChoice')||'0',10);
+  let REPLACE_TARGET = REPLACEMENTS[index].url;
   indicator.textContent = REPLACE_TARGET;
-  document.title = mapTitle(REPLACE_TARGET);
+  document.title = REPLACEMENTS[index].title;
 
-  const saver = document.getElementById("screensaver");
-
-  const modes = ["mode1","mode2","mode3","galaxy"];
-  let active = false;
-
-  function getRandomMode(){
-    return modes[Math.floor(Math.random()*modes.length)];
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
   }
+  resize();
+  window.addEventListener('resize', resize);
 
-  let galaxyCanvas = null;
-  let galaxyCtx = null;
-  let stars = [];
-
-  function startGalaxy(){
-    galaxyCanvas = document.createElement("canvas");
-    saver.appendChild(galaxyCanvas);
-    galaxyCtx = galaxyCanvas.getContext("2d");
-
-    function resize(){
-      galaxyCanvas.width = window.innerWidth;
-      galaxyCanvas.height = window.innerHeight;
-    }
-    resize();
-    window.addEventListener("resize", resize);
-
-    const numStars = 250;
-    stars = [];
-    for(let i=0;i<numStars;i++){
-      stars.push({
-        x: Math.random()*galaxyCanvas.width,
-        y: Math.random()*galaxyCanvas.height,
-        z: Math.random()*3 + 0.2
-      });
-    }
-
-    function animate(){
-      if(!active || saver.dataset.mode!=="galaxy") return;
-
-      galaxyCtx.fillStyle = "black";
-      galaxyCtx.fillRect(0,0,galaxyCanvas.width,galaxyCanvas.height);
-
-      for(const s of stars){
-        galaxyCtx.fillStyle = "white";
-        galaxyCtx.fillRect(s.x, s.y, s.z, s.z);
-
-        s.x += (s.x - galaxyCanvas.width/2) * 0.002;
-        s.y += (s.y - galaxyCanvas.height/2) * 0.002;
-
-        if(s.x < 0 || s.x > galaxyCanvas.width || s.y < 0 || s.y > galaxyCanvas.height){
-          s.x = Math.random()*galaxyCanvas.width;
-          s.y = Math.random()*galaxyCanvas.height;
-        }
-      }
-
-      requestAnimationFrame(animate);
-    }
-
-    animate();
-  }
-
-  function stopGalaxy(){
-    saver.innerHTML = "";
-    galaxyCanvas = null;
-    galaxyCtx = null;
-    stars = [];
-  }
-
-  function enableScreensaver(){
-    active = true;
-    saver.style.display = "block";
-
-    const m = getRandomMode();
-    saver.dataset.mode = m;
-
-    if(m !== "galaxy"){
-      saver.className = m;
-      stopGalaxy();
-    } else {
-      saver.className = "";
-      startGalaxy();
-    }
-  }
-
-  function disableScreensaver(){
-    active = false;
-    saver.style.display = "none";
-    saver.className = "";
-    saver.dataset.mode = "";
-    stopGalaxy();
-  }
-
-  disableScreensaver();
-
-  const buffer = [];
   const MAX_BUFFER = 60;
-  function norm(k){ return k ? k.toLowerCase() : ""; }
+  const buffer = [];
+
+  let saverOn = false;
+  const modes = ['galaxy','rainbow','pulse'];
+  let mode = 0; // index into modes
+
+  // galaxy particles
+  let galaxyStars = [];
+  let mouseX = 0, mouseY = 0, mouseDown = false;
+  function initGalaxy(){
+    galaxyStars = Array.from({length:350}, ()=>({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      r: Math.random()*1.8 + 0.6,
+      dx: (Math.random()-0.5)*0.6,
+      dy: (Math.random()-0.5)*0.6,
+      hue: Math.random()*360
+    }));
+  }
+
+  // white twinkling stars overlay
+  let twinkleStars = [];
+  function initTwinkles(){
+    twinkleStars = Array.from({length:220}, ()=>({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      r: Math.random()*1.2 + 0.3,
+      t: Math.random()*Math.PI*2,
+      speed: 0.02 + Math.random()*0.04
+    }));
+  }
+
+  function drawGalaxy(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // subtle nebula background
+    const grad = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+    grad.addColorStop(0, 'rgba(6,3,37,0.85)');
+    grad.addColorStop(1, 'rgba(1,6,20,0.85)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    for(const s of galaxyStars){
+      s.x += s.dx * (1 + s.r*0.2);
+      s.y += s.dy * (1 + s.r*0.2);
+      s.hue = (s.hue + 0.005) % 360;
+      if(s.x < -10) s.x = canvas.width + 10;
+      if(s.x > canvas.width + 10) s.x = -10;
+      if(s.y < -10) s.y = canvas.height + 10;
+      if(s.y > canvas.height + 10) s.y = -10;
+
+      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r*6);
+      g.addColorStop(0, `hsla(${s.hue},90%,75%,1)`);
+      g.addColorStop(0.2, `hsla(${s.hue},80%,60%,0.7)`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r*6, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.fillStyle = `hsla(${s.hue},90%,80%,0.95)`;
+      ctx.arc(s.x, s.y, Math.max(0.6, s.r/2), 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  function drawRainbow(){
+    const g = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+    const t = (Date.now()/20)%360;
+    g.addColorStop(0, `hsl(${t},100%,50%)`);
+    g.addColorStop(0.5, `hsl(${(t+120)%360},100%,50%)`);
+    g.addColorStop(1, `hsl(${(t+240)%360},100%,50%)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  function drawPulse(){
+    const t = Date.now()/400;
+    const r = Math.sin(t)*0.5 + 0.5;
+    ctx.fillStyle = `rgba(${Math.floor(r*200)},${Math.floor(r*60)},${Math.floor(200 + r*55)},1)`;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  function drawTwinkles(){
+    for(const s of twinkleStars){
+      s.t += s.speed;
+      const alpha = 0.3 + Math.abs(Math.sin(s.t))*0.7;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  canvas.addEventListener('mousemove', e=>{
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
+  });
+  canvas.addEventListener('mousedown', ()=> mouseDown = true);
+  canvas.addEventListener('mouseup', ()=> mouseDown = false);
+
+  function animate(){
+    if(saverOn){
+      if(modes[mode] === 'galaxy') drawGalaxy();
+      else if(modes[mode] === 'rainbow') drawRainbow();
+      else if(modes[mode] === 'pulse') drawPulse();
+
+      // overlay twinkles on top for depth
+      drawTwinkles();
+    }
+    requestAnimationFrame(animate);
+  }
+
+  initGalaxy();
+  initTwinkles();
+  animate();
+
+  function toggleSaver(){
+    saverOn = !saverOn;
+    if(saverOn){
+      mode = Math.floor(Math.random()*modes.length);
+      if(modes[mode] === 'galaxy') initGalaxy();
+      initTwinkles();
+      canvas.classList.add('active');
+    } else {
+      canvas.classList.remove('active');
+      // clear canvas to black when turning off
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+  }
+
+  function openCloakedTab(target){
+    try{
+      const tab = window.open('about:blank','_blank');
+      if(!tab){ window.open(target,'_blank'); return; }
+      const html = `<!doctype html><html><head><meta charset='utf-8'><style>html,body{margin:0;height:100%;background:#000;}iframe{width:100%;height:100%;border:0;}</style></head><body><iframe src='${target}' sandbox="allow-scripts allow-forms allow-same-origin allow-popups" allowfullscreen></iframe></body></html>`;
+      tab.document.open(); tab.document.write(html); tab.document.close();
+    }catch(e){ window.open(target,'_blank'); }
+  }
+
+  function trigger(code){
+    if(code === 'saver'){
+      toggleSaver();
+      return;
+    }
+    openCloakedTab(maps[code]);
+    document.documentElement.style.visibility = 'hidden';
+    setTimeout(()=> location.replace(REPLACEMENTS[index].url), 250);
+  }
 
   function findSecret(){
-    for(const s of SECRETS){
-      const seq = s.code.split("");
+    for(const code of SECRETS){
+      const seq = code.split('');
       if(buffer.length < seq.length) continue;
       let ok = true;
       for(let j=0;j<seq.length;j++){
-        if(buffer[buffer.length - seq.length + j] !== seq[j]){ ok=false; break; }
+        if(buffer[buffer.length - seq.length + j] !== seq[j]){ ok = false; break; }
       }
-      if(ok) return s;
+      if(ok) return code;
     }
     return null;
   }
 
-  function checkSaverSequence(){
-    const seq = "saver".split("");
-    if(buffer.length < seq.length) return false;
-    for(let j=0;j<seq.length;j++){
-      if(buffer[buffer.length - seq.length + j] !== seq[j]) return false;
-    }
-    return true;
+  function mapTitle(url){
+    if(url === 'https://www.clever.com') return 'Clever';
+    if(url === 'https://wwhs.echo-ntn.org') return 'Buzz';
+    if(url === 'about:blank') return 'about:blank';
+    return 'Redirecting';
   }
 
-  function openCloakedTab(target){
-    let tab = null;
-    try{
-      tab = window.open("about:blank","_blank");
-      if(!tab){ window.open(target,"_blank"); return; }
-      const html = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;height:100%;background:#000}iframe{border:0;width:100%;height:100%}</style></head><body><iframe src="'+target+'" sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe></body></html>';
-      tab.document.open();
-      tab.document.write(html);
-      tab.document.close();
-    }catch(e){
-      window.open(target,"_blank");
-    }
-  }
-
-  function trigger(secret){
-    if(secret && secret.newTab) openCloakedTab(secret.newTab);
-    document.documentElement.style.visibility = "hidden";
-    setTimeout(()=>location.replace(REPLACE_TARGET),250);
-  }
-
-  window.addEventListener("keydown", e=>{
-    const k = norm(e.key);
+  window.addEventListener('keydown', e=>{
+    const k = e.key ? e.key.toLowerCase() : '';
     if(!k) return;
 
-    if(k === "l"){
-      i = (i + 1) % REPLACEMENTS.length;
-      localStorage.setItem("selectedLinkIndex", i);
-      REPLACE_TARGET = REPLACEMENTS[i];
+    if(k === 'l'){
+      index = (index + 1) % REPLACEMENTS.length;
+      REPLACE_TARGET = REPLACEMENTS[index].url;
+      localStorage.setItem('linkChoice', index);
       indicator.textContent = REPLACE_TARGET;
       document.title = mapTitle(REPLACE_TARGET);
       return;
@@ -268,23 +267,13 @@
     buffer.push(k);
     if(buffer.length > MAX_BUFFER) buffer.shift();
 
-    if(checkSaverSequence()){
-      if(active) disableScreensaver();
-      else enableScreensaver();
-      buffer.length = 0;
-      return;
-    }
-
-    const match = findSecret();
-    if(match){
-      trigger(match);
-      buffer.length = 0;
-    }
+    const secret = findSecret();
+    if(secret){ buffer.length = 0; trigger(secret); }
   });
 
-  setTimeout(()=>{ const h=document.getElementById("hint"); if(h) h.style.display = "none"; },3500);
+  setTimeout(()=>{ if(hint) hint.style.display = 'none'; }, 3000);
+
 })();
 </script>
-
 </body>
 </html>
