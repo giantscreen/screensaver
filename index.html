@@ -37,7 +37,8 @@
     z-index:1;
     opacity:0;
     transition:opacity 2.5s ease;
-    pointer-events:none;
+    pointer-events:auto;
+    display:block;
   }
   #screensaverCanvas.active{
     opacity:1;
@@ -113,17 +114,37 @@
 
   function drawGalaxy(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    // subtle nebula background
     const grad = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
     grad.addColorStop(0, 'rgba(6,3,37,0.85)');
     grad.addColorStop(1, 'rgba(1,6,20,0.85)');
     ctx.fillStyle = grad;
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
+    // apply mouse interaction forces
+    const repelRadius = Math.min(canvas.width, canvas.height) * 0.18; // influence radius
+    const repelStrength = mouseDown ? 0.6 : 0.25; // stronger when holding
+
     for(const s of galaxyStars){
+      // basic motion
       s.x += s.dx * (1 + s.r*0.2);
       s.y += s.dy * (1 + s.r*0.2);
       s.hue = (s.hue + 0.005) % 360;
+
+      // distance to mouse
+      const dx = s.x - mouseX;
+      const dy = s.y - mouseY;
+      const dist = Math.sqrt(dx*dx + dy*dy) + 0.0001;
+
+      if(dist < repelRadius){
+        const force = (repelRadius - dist) / repelRadius * repelStrength;
+        s.dx += (dx / dist) * force;
+        s.dy += (dy / dist) * force;
+      }
+
+      // slow damping
+      s.dx *= 0.994;
+      s.dy *= 0.994;
+
       if(s.x < -10) s.x = canvas.width + 10;
       if(s.x > canvas.width + 10) s.x = -10;
       if(s.y < -10) s.y = canvas.height + 10;
@@ -147,7 +168,7 @@
 
   function drawRainbow(){
     const g = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
-    const t = (Date.now()/20)%360;
+    const t = (Date.now()/200) % 360;
     g.addColorStop(0, `hsl(${t},100%,50%)`);
     g.addColorStop(0.5, `hsl(${(t+120)%360},100%,50%)`);
     g.addColorStop(1, `hsl(${(t+240)%360},100%,50%)`);
@@ -178,8 +199,21 @@
     mouseX = e.clientX - rect.left;
     mouseY = e.clientY - rect.top;
   });
-  canvas.addEventListener('mousedown', ()=> mouseDown = true);
+  canvas.addEventListener('mousedown', e=>{
+    mouseDown = true;
+    // on mousedown also apply an immediate pulse away from cursor
+    const impulseRadius = Math.min(canvas.width, canvas.height) * 0.12;
+    const impulseStrength = 2.2;
+    for(const s of galaxyStars){
+      const dx = s.x - mouseX, dy = s.y - mouseY; const d = Math.sqrt(dx*dx + dy*dy) + 0.0001;
+      if(d < impulseRadius){
+        const f = (impulseRadius - d)/impulseRadius * impulseStrength * (0.6 + Math.random()*0.8);
+        s.dx += (dx/d) * f; s.dy += (dy/d) * f;
+      }
+    }
+  });
   canvas.addEventListener('mouseup', ()=> mouseDown = false);
+  canvas.addEventListener('mouseleave', ()=> mouseDown = false);
 
   function animate(){
     if(saverOn){
@@ -206,7 +240,6 @@
       canvas.classList.add('active');
     } else {
       canvas.classList.remove('active');
-      // clear canvas to black when turning off
       ctx.clearRect(0,0,canvas.width,canvas.height);
       ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
     }
