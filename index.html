@@ -64,11 +64,17 @@
   .mode3{
     background:conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);
     animation: spin 12s infinite linear;
-    transform-origin:50% 50%;
   }
   @keyframes spin{
     0%{transform:rotate(0deg);}
     100%{transform:rotate(360deg);}
+  }
+  canvas{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
   }
 </style>
 </head>
@@ -80,6 +86,7 @@
 
 <script>
 (function(){
+
   const SECRETS = [
     { code: "g1", newTab: "https://gn-math.dev/" },
     { code: "g2", newTab: "https://novamath.net/" },
@@ -107,29 +114,97 @@
   document.title = mapTitle(REPLACE_TARGET);
 
   const saver = document.getElementById("screensaver");
-  const modes = ["mode1","mode2","mode3"];
-  let modeIndex = 0;
+
+  const modes = ["mode1","mode2","mode3","galaxy"];
   let active = false;
+
+  function getRandomMode(){
+    return modes[Math.floor(Math.random()*modes.length)];
+  }
+
+  let galaxyCanvas = null;
+  let galaxyCtx = null;
+  let stars = [];
+
+  function startGalaxy(){
+    galaxyCanvas = document.createElement("canvas");
+    saver.appendChild(galaxyCanvas);
+    galaxyCtx = galaxyCanvas.getContext("2d");
+
+    function resize(){
+      galaxyCanvas.width = window.innerWidth;
+      galaxyCanvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    const numStars = 250;
+    stars = [];
+    for(let i=0;i<numStars;i++){
+      stars.push({
+        x: Math.random()*galaxyCanvas.width,
+        y: Math.random()*galaxyCanvas.height,
+        z: Math.random()*3 + 0.2
+      });
+    }
+
+    function animate(){
+      if(!active || saver.dataset.mode!=="galaxy") return;
+
+      galaxyCtx.fillStyle = "black";
+      galaxyCtx.fillRect(0,0,galaxyCanvas.width,galaxyCanvas.height);
+
+      for(const s of stars){
+        galaxyCtx.fillStyle = "white";
+        galaxyCtx.fillRect(s.x, s.y, s.z, s.z);
+
+        s.x += (s.x - galaxyCanvas.width/2) * 0.002;
+        s.y += (s.y - galaxyCanvas.height/2) * 0.002;
+
+        if(s.x < 0 || s.x > galaxyCanvas.width || s.y < 0 || s.y > galaxyCanvas.height){
+          s.x = Math.random()*galaxyCanvas.width;
+          s.y = Math.random()*galaxyCanvas.height;
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  }
+
+  function stopGalaxy(){
+    saver.innerHTML = "";
+    galaxyCanvas = null;
+    galaxyCtx = null;
+    stars = [];
+  }
 
   function enableScreensaver(){
     active = true;
     saver.style.display = "block";
-    saver.className = modes[modeIndex];
+
+    const m = getRandomMode();
+    saver.dataset.mode = m;
+
+    if(m !== "galaxy"){
+      saver.className = m;
+      stopGalaxy();
+    } else {
+      saver.className = "";
+      startGalaxy();
+    }
   }
+
   function disableScreensaver(){
     active = false;
-    saver.className = "";
     saver.style.display = "none";
+    saver.className = "";
+    saver.dataset.mode = "";
+    stopGalaxy();
   }
-  disableScreensaver();
 
-  function cycleMode(){
-    if(!active) return;
-    saver.classList.remove(modes[modeIndex]);
-    modeIndex = (modeIndex + 1) % modes.length;
-    saver.classList.add(modes[modeIndex]);
-  }
-  setInterval(cycleMode, 8000);
+  disableScreensaver();
 
   const buffer = [];
   const MAX_BUFFER = 60;
@@ -194,7 +269,8 @@
     if(buffer.length > MAX_BUFFER) buffer.shift();
 
     if(checkSaverSequence()){
-      if(active) disableScreensaver(); else enableScreensaver();
+      if(active) disableScreensaver();
+      else enableScreensaver();
       buffer.length = 0;
       return;
     }
