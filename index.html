@@ -68,7 +68,7 @@
     { url:"about:blank", title:"about:blank" }
   ];
 
-  const SECRETS = ["g1","g2","g3","saver","poke","s1","n1"]; // saver toggles screensaver
+  const SECRETS = ["g1","g2","g3","saver","poke","s1","n1"];
   const maps = { g1:"https://gn-math.dev/", g2:"https://novamath.net/", g3:"https://kbhgames.com/", poke:"https://pokemonshowdown.com/", s1:"https://open.spotify.com/", n1:"https://neal.fun/" };
 
   const canvas = document.getElementById('screensaverCanvas');
@@ -150,7 +150,7 @@
         s.dy += (dy / dist) * force;
       }
 
-      // slow damping
+     
       s.dx *= 0.994;
       s.dy *= 0.994;
 
@@ -210,7 +210,7 @@
   });
   canvas.addEventListener('mousedown', e=>{
     mouseDown = true;
-    // on mousedown also apply an immediate pulse away from cursor
+   
     const impulseRadius = Math.min(canvas.width, canvas.height) * 0.12;
     const impulseStrength = 2.2;
     for(const s of galaxyStars){
@@ -230,7 +230,7 @@
       else if(modes[mode] === 'rainbow') drawRainbow();
       else if(modes[mode] === 'pulse') drawPulse();
 
-      // overlay twinkles on top for depth
+      
       drawTwinkles();
     }
     requestAnimationFrame(animate);
