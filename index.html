@@ -247,7 +247,7 @@ function updateFavicon(url){
     }
   }
 
-  // --- NEW openCloakedTab() ---
+  
   function openCloakedTab(target, faviconURL, title){
     try {
         const tab = window.open('about:blank', '_blank');
@@ -255,42 +255,14 @@ function updateFavicon(url){
             window.open(target, '_blank');
             return;
         }
-        const html = `
-        <!doctype html>
-        <html>
-        <head>
-            <meta charset='utf-8'>
-            <style>
-                html,body{
-                    margin:0;
-                    height:100%;
-                    background:#000;
-                }
-                iframe{
-                    width:100%;
-                    height:100%;
-                    border:0;
-                }
-            </style>
-            <link rel="icon" type="image/x-icon" href="${faviconURL}">
-            <title>${title}</title>
-        </head>
-        <body>
-            <iframe 
-              src='${target}' 
-              sandbox="allow-scripts allow-forms allow-same-origin allow-popups" 
-              allowfullscreen>
-            </iframe>
-        </body>
-        </html>`;
+        const html = `<!doctype html><html><head><meta charset='utf-8'><style>html,body{margin:0;height:100%;background:#000;}iframe{width:100%;height:100%;border:0;}</style><link rel="icon" type="image/x-icon" href="${faviconURL}"><title>${title}</title></head><body><iframe src='${target}' sandbox="allow-scripts allow-forms allow-same-origin allow-popups" allowfullscreen></iframe></body></html>`;
         tab.document.open();
         tab.document.write(html);
         tab.document.close();
     } catch (e) {
         window.open(target, '_blank');
     }
-  }
-
+    }
   function trigger(code){
     if(code === 'saver'){
       toggleSaver();
