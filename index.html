@@ -69,8 +69,8 @@ function updateFavicon(url){
     { url:"about:blank", title:"about:blank", favicon:"/favicon.png" }
   ];
 
-  const SECRETS = ["g1","g2","g3","saver","poke","s1","n1"];
-  const maps = { g1:"https://gn-math.dev/", g2:"https://novamath.net/", g3:"https://kbhgames.com/", poke:"https://pokemonshowdown.com/", s1:"https://open.spotify.com/", n1:"https://snoopthethird.oops.wtf/f2f0fd81d21a4475a84ca419706d0c0d/_rhspL-2://9II1oDl.DQ1/" };
+  const SECRETS = ["g1","g2","g3","saver","poke"];
+  const maps = { g1:"https://gn-math.dev/", g2:"https://novamath.net/", g3:"https://kbhgames.com/", poke:"https://pokemonshowdown.com/" };
 
   const canvas = document.getElementById('screensaverCanvas');
   const ctx = canvas.getContext('2d');
@@ -250,7 +250,7 @@ function updateFavicon(url){
   
   function openCloakedTab(target, faviconURL, title){
     try {
-        const tab = window.open('https://snoopthethird.oops.wtf/f2f0fd81d21a4475a84ca419706d0c0d/_rhspL-2://9II1oDl.DQ1/', '_blank');
+        const tab = window.open('about_blank', '_blank');
         if (!tab) {
             window.open(target, '_blank');
             return;
