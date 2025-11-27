@@ -44,20 +44,17 @@
     opacity:1;
   }
 </style>
-<script>
-function updateFavicon(url){
-  const link = document.querySelector("link[rel='icon']") || document.createElement('link');
-  link.rel = 'icon';
-  link.type = 'image/png';
-  link.href = url;
-  document.head.appendChild(link);
-}
-</script>
+  <script>
+    function updateFavicon(url){
+      const link = document.querySelector("link[rel='icon']") || document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
+      link.href = url;
+      document.head.appendChild(link);
+    }
+  </script>
 </head>
 <body>
-
-<!-- X-Frame Anywhere script -->
-<script type="module" src="https://cdn.jsdelivr.net/gh/x64bitMango/x-frame-anywhere/x-frame-anywhere.js" defer></script>
 
 <div id="hint">Saving your screen from falling asleep!</div>
 <div id="linkIndicator"></div>
@@ -65,32 +62,14 @@ function updateFavicon(url){
 
 <script>
 (function(){
-
   const REPLACEMENTS = [
-    { url:"https://www.clever.com", title:"Clever", favicon:"https://www.clever.com/favicon.ico" },
-    { url:"https://wwhs.echo-ntn.org", title:"Buzz", favicon:"https://wwhs.echo-ntn.org/favicon.ico" },
-    { url:"about:blank", title:"about:blank", favicon:"/favicon.png" }
+    { url:"https://www.clever.com", title:"Clever" },
+    { url:"https://wwhs.echo-ntn.org", title:"Buzz" },
+    { url:"about:blank", title:"about:blank" }
   ];
 
-  const SECRETS = ["g1","g2","g3","saver","poke","s1","n1"];
-  const maps = {
-    g1:"https://gn-math.dev/",
-    g2:"https://novamath.net/",
-    g3:"https://kbhgames.com/",
-    poke:"https://pokemonshowdown.com/",
-    s1:"https://open.spotify.com/",
-    n1:"https://neal.fun/"
-  };
-
-  const secretFavicons = {
-    g1:"https://gn-math.dev/favicon.ico",
-    g2:"https://novamath.net/favicon.ico",
-    g3:"https://kbhgames.com/favicon.ico",
-    poke:"https://pokemonshowdown.com/favicon.ico",
-    s1:"https://open.spotify.com/favicon.ico",
-    n1:"https://neal.fun/favicon.ico",
-    saver:REPLACEMENTS[2].favicon
-  };
+  const SECRETS = ["g1","g2","g3","saver","poke","s1","n1"]; // saver toggles screensaver
+  const maps = { g1:"https://gn-math.dev/", g2:"https://novamath.net/", g3:"https://kbhgames.com/", poke:"https://pokemonshowdown.com/", s1:"https://open.spotify.com/", n1:"https://neal.fun/" };
 
   const canvas = document.getElementById('screensaverCanvas');
   const ctx = canvas.getContext('2d');
@@ -114,12 +93,13 @@ function updateFavicon(url){
 
   let saverOn = false;
   const modes = ['galaxy','rainbow','pulse'];
-  let mode = 0;
+  let mode = 0; // index into modes
 
+  // galaxy particles
   let galaxyStars = [];
   let mouseX = 0, mouseY = 0, mouseDown = false;
   function initGalaxy(){
-    galaxyStars = Array.from({length:350}, () => ({
+    galaxyStars = Array.from({length:350}, ()=>({
       x: Math.random()*canvas.width,
       y: Math.random()*canvas.height,
       r: Math.random()*1.8 + 0.6,
@@ -129,9 +109,10 @@ function updateFavicon(url){
     }));
   }
 
+  // white twinkling stars overlay
   let twinkleStars = [];
   function initTwinkles(){
-    twinkleStars = Array.from({length:220}, () => ({
+    twinkleStars = Array.from({length:220}, ()=>({
       x: Math.random()*canvas.width,
       y: Math.random()*canvas.height,
       r: Math.random()*1.2 + 0.3,
@@ -148,14 +129,17 @@ function updateFavicon(url){
     ctx.fillStyle = grad;
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    const repelRadius = Math.min(canvas.width, canvas.height) * 0.18;
-    const repelStrength = mouseDown ? 0.6 : 0.25;
+    // apply mouse interaction forces
+    const repelRadius = Math.min(canvas.width, canvas.height) * 0.18; // influence radius
+    const repelStrength = mouseDown ? 0.6 : 0.25; // stronger when holding
 
     for(const s of galaxyStars){
+      // basic motion
       s.x += s.dx * (1 + s.r*0.2);
       s.y += s.dy * (1 + s.r*0.2);
       s.hue = (s.hue + 0.005) % 360;
 
+      // distance to mouse
       const dx = s.x - mouseX;
       const dy = s.y - mouseY;
       const dist = Math.sqrt(dx*dx + dy*dy) + 0.0001;
@@ -166,6 +150,7 @@ function updateFavicon(url){
         s.dy += (dy / dist) * force;
       }
 
+      // slow damping
       s.dx *= 0.994;
       s.dy *= 0.994;
 
@@ -225,11 +210,11 @@ function updateFavicon(url){
   });
   canvas.addEventListener('mousedown', e=>{
     mouseDown = true;
+    // on mousedown also apply an immediate pulse away from cursor
     const impulseRadius = Math.min(canvas.width, canvas.height) * 0.12;
     const impulseStrength = 2.2;
     for(const s of galaxyStars){
-      const dx = s.x - mouseX, dy = s.y - mouseY;
-      const d = Math.sqrt(dx*dx + dy*dy) + 0.0001;
+      const dx = s.x - mouseX, dy = s.y - mouseY; const d = Math.sqrt(dx*dx + dy*dy) + 0.0001;
       if(d < impulseRadius){
         const f = (impulseRadius - d)/impulseRadius * impulseStrength * (0.6 + Math.random()*0.8);
         s.dx += (dx/d) * f; s.dy += (dy/d) * f;
@@ -244,6 +229,8 @@ function updateFavicon(url){
       if(modes[mode] === 'galaxy') drawGalaxy();
       else if(modes[mode] === 'rainbow') drawRainbow();
       else if(modes[mode] === 'pulse') drawPulse();
+
+      // overlay twinkles on top for depth
       drawTwinkles();
     }
     requestAnimationFrame(animate);
@@ -267,27 +254,13 @@ function updateFavicon(url){
     }
   }
 
-  // OPEN NEW TAB WITH X-FRAME-ANYWHERE
-  function openXFrameTab(target, faviconURL, title){
-    const tab = window.open('', '_blank');
-    if(!tab) return window.open(target, '_blank');
-    const html = `
-      <!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <link rel="icon" type="image/x-icon" href="${faviconURL}">
-          <title>${title}</title>
-          <script type="module" src="https://cdn.jsdelivr.net/gh/x64bitMango/x-frame-anywhere/x-frame-anywhere.js" defer></script>
-          <style>html,body{margin:0;height:100%;background:#000;}iframe{width:100%;height:100%;border:0;}</style>
-        </head>
-        <body>
-          <iframe is="x-frame-anywhere" src="${target}" allowfullscreen></iframe>
-        </body>
-      </html>`;
-    tab.document.open();
-    tab.document.write(html);
-    tab.document.close();
+  function openCloakedTab(target){
+    try{
+      const tab = window.open('about:blank','_blank');
+      if(!tab){ window.open(target,'_blank'); return; }
+      const html = `<!doctype html><html><head><meta charset='utf-8'><style>html,body{margin:0;height:100%;background:#000;}iframe{width:100%;height:100%;border:0;}</style></head><body><iframe src='${target}' sandbox="allow-scripts allow-forms allow-same-origin allow-popups" allowfullscreen></iframe></body></html>`;
+      tab.document.open(); tab.document.write(html); tab.document.close();
+    }catch(e){ window.open(target,'_blank'); }
   }
 
   function trigger(code){
@@ -295,11 +268,7 @@ function updateFavicon(url){
       toggleSaver();
       return;
     }
-    openXFrameTab(
-      maps[code],
-      secretFavicons[code] || REPLACEMENTS[index].favicon,
-      REPLACEMENTS[index].title
-    );
+    openCloakedTab(maps[code]);
     document.documentElement.style.visibility = 'hidden';
     setTimeout(()=> location.replace(REPLACEMENTS[index].url), 250);
   }
