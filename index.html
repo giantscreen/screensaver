@@ -44,15 +44,19 @@
     opacity:1;
   }
 </style>
-  <script>
-    function updateFavicon(url){
-      const link = document.querySelector("link[rel='icon']") || document.createElement('link');
-      link.rel = 'icon';
-      link.type = 'image/png';
-      link.href = url;
-      document.head.appendChild(link);
-    }
-  </script>
+
+<!-- Added x-frame-anywhere script -->
+<script type="module" src="https://cdn.jsdelivr.net/gh/x64bitMango/x-frame-anywhere/x-frame-anywhere.js" defer></script>
+
+<script>
+  function updateFavicon(url){
+    const link = document.querySelector("link[rel='icon']") || document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/png';
+    link.href = url;
+    document.head.appendChild(link);
+  }
+</script>
 </head>
 <body>
 
@@ -129,17 +133,14 @@
     ctx.fillStyle = grad;
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    // apply mouse interaction forces
-    const repelRadius = Math.min(canvas.width, canvas.height) * 0.18; // influence radius
-    const repelStrength = mouseDown ? 0.6 : 0.25; // stronger when holding
+    const repelRadius = Math.min(canvas.width, canvas.height) * 0.18; 
+    const repelStrength = mouseDown ? 0.6 : 0.25; 
 
     for(const s of galaxyStars){
-      // basic motion
       s.x += s.dx * (1 + s.r*0.2);
       s.y += s.dy * (1 + s.r*0.2);
       s.hue = (s.hue + 0.005) % 360;
 
-      // distance to mouse
       const dx = s.x - mouseX;
       const dy = s.y - mouseY;
       const dist = Math.sqrt(dx*dx + dy*dy) + 0.0001;
@@ -150,7 +151,6 @@
         s.dy += (dy / dist) * force;
       }
 
-      // slow damping
       s.dx *= 0.994;
       s.dy *= 0.994;
 
@@ -210,7 +210,6 @@
   });
   canvas.addEventListener('mousedown', e=>{
     mouseDown = true;
-    // on mousedown also apply an immediate pulse away from cursor
     const impulseRadius = Math.min(canvas.width, canvas.height) * 0.12;
     const impulseStrength = 2.2;
     for(const s of galaxyStars){
@@ -229,8 +228,6 @@
       if(modes[mode] === 'galaxy') drawGalaxy();
       else if(modes[mode] === 'rainbow') drawRainbow();
       else if(modes[mode] === 'pulse') drawPulse();
-
-      // overlay twinkles on top for depth
       drawTwinkles();
     }
     requestAnimationFrame(animate);
