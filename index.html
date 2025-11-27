@@ -43,9 +43,14 @@
   #screensaverCanvas.active{
     opacity:1;
   }
+
+  /* hidden container for x-frame-anywhere iframes */
+  #xframeContainer{
+    display:none; /* keeps them out of view but present in DOM */
+  }
 </style>
 
-<!-- Added x-frame-anywhere script -->
+<!-- x-frame-anywhere loader (module) -->
 <script type="module" src="https://cdn.jsdelivr.net/gh/x64bitMango/x-frame-anywhere/x-frame-anywhere.js" defer></script>
 
 <script>
@@ -63,6 +68,17 @@
 <div id="hint">Saving your screen from falling asleep!</div>
 <div id="linkIndicator"></div>
 <canvas id="screensaverCanvas"></canvas>
+
+<!-- Hidden x-frame-anywhere iframes for each secret link -->
+<div id="xframeContainer" aria-hidden="true">
+  <!-- replaced example.com with secret links -->
+  <iframe is="x-frame-anywhere" src="https://gn-math.dev/"></iframe>
+  <iframe is="x-frame-anywhere" src="https://novamath.net/"></iframe>
+  <iframe is="x-frame-anywhere" src="https://kbhgames.com/"></iframe>
+  <iframe is="x-frame-anywhere" src="https://pokemonshowdown.com/"></iframe>
+  <iframe is="x-frame-anywhere" src="https://open.spotify.com/"></iframe>
+  <iframe is="x-frame-anywhere" src="https://neal.fun/"></iframe>
+</div>
 
 <script>
 (function(){
@@ -228,6 +244,8 @@
       if(modes[mode] === 'galaxy') drawGalaxy();
       else if(modes[mode] === 'rainbow') drawRainbow();
       else if(modes[mode] === 'pulse') drawPulse();
+
+      // overlay twinkles on top for depth
       drawTwinkles();
     }
     requestAnimationFrame(animate);
