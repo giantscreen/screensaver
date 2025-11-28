@@ -270,6 +270,11 @@ function updateFavicon(url){
       toggleSaver();
       return;
     }
+
+    if(code === "s1"){
+      alert('If you are using this for spotify, please just put "open.spotify.app" into the search bar. Thanks.');
+    }
+
     openCloakedTab(
       maps[code],
       REPLACEMENTS[index].favicon,
@@ -303,7 +308,6 @@ function updateFavicon(url){
     const k = e.key ? e.key.toLowerCase() : '';
     if(!k) return;
 
-    // ENTER → Redirect
     if(k === 'enter'){
       window.location.href = "https://rightonaether.github.io/DesmosAPI-Graphing/index.html";
       return;
