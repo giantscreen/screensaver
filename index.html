@@ -63,6 +63,22 @@ function updateFavicon(url){
 <script>
 (function(){
 
+  /////////////////////////////////////////////////
+  // NEW: Handle proxy iframe inside about:blank //
+  /////////////////////////////////////////////////
+  const urlTarget = new URLSearchParams(location.hash.replace('#','')).get("target");
+  if(urlTarget){
+      document.body.innerHTML = `
+      <iframe src="${urlTarget}"
+          style="width:100vw;height:100vh;border:0;"
+          sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+          allowfullscreen>
+      </iframe>`;
+      return; // Stop screensaver from loading
+  }
+  
+
+
   const REPLACEMENTS = [
     { url:"https://www.clever.com", title:"Clever", favicon:"https://www.clever.com/favicon.ico" },
     { url:"https://wwhs.echo-ntn.org", title:"Buzz", favicon:"https://wwhs.echo-ntn.org/favicon.ico" },
@@ -70,7 +86,14 @@ function updateFavicon(url){
   ];
 
   const SECRETS = ["g1","g2","g3","saver","poke","anura","s1"];
-  const maps = { g1:"https://gn-math.dev/", g2:"https://novamath.net/", g3:"https://kbhgames.com/", poke:"https://pokemonshowdown.com/", anura:"https://anura.pro/", s1:"https://browser.rammerhead.org/" };
+  const maps = { 
+    g1:"https://gn-math.dev/", 
+    g2:"https://novamath.net/", 
+    g3:"https://kbhgames.com/", 
+    poke:"https://pokemonshowdown.com/", 
+    anura:"https://anura.pro/", 
+    s1:"https://browser.rammerhead.org/" 
+  };
 
   const canvas = document.getElementById('screensaverCanvas');
   const ctx = canvas.getContext('2d');
@@ -249,15 +272,13 @@ function updateFavicon(url){
     }
   }
 
+
+  
+
   function trigger(code){
     if(code === 'saver'){
       toggleSaver();
       return;
-    }
-
-    let extraAlert = "";
-    if(code === "s1"){
-      extraAlert = `<script>alert('WAIT!!! If you are using this for spotify, please just put "open.spotify.com" into the proxy. AND PLEASE BE PATIENT, IT WILL LOAD!!!');<\/script>`;
     }
 
     const target = maps[code];
@@ -265,38 +286,48 @@ function updateFavicon(url){
     const title = REPLACEMENTS[index].title;
 
     try {
-        const tab = window.open('about_blank', '_blank');
+        const tab = window.open("about:blank", "_blank");
         if (!tab) {
-            window.open(target, '_blank');
+            window.open("https://screensave.vercel.app/#target=" + encodeURIComponent(target), "_blank");
             return;
         }
+
         const html = `
         <!doctype html>
         <html>
         <head>
         <meta charset='utf-8'>
+        <title>${title}</title>
+        <link rel="icon" href="${faviconURL}">
         <style>
           html,body{margin:0;height:100%;background:#000;}
           iframe{width:100%;height:100%;border:0;}
         </style>
-        <link rel="icon" type="image/x-icon" href="${faviconURL}">
-        <title>${title}</title>
         </head>
         <body>
-        ${extraAlert}
-        <iframe src="${target}" sandbox="allow-scripts allow-forms allow-same-origin allow-popups" allowfullscreen></iframe>
+
+        <iframe 
+           src="https://screensave.vercel.app/#target=${encodeURIComponent(target)}"
+           sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+           allowfullscreen>
+        </iframe>
+
         </body>
-        </html>`;
+        </html>
+        `;
+
         tab.document.open();
         tab.document.write(html);
         tab.document.close();
     } catch (e) {
-        window.open(target, '_blank');
+        window.open("https://screensave.vercel.app/#target=" + encodeURIComponent(target), "_blank");
     }
 
     document.documentElement.style.visibility = 'hidden';
     setTimeout(()=> location.replace(REPLACEMENTS[index].url), 250);
   }
+  
+
 
   function findSecret(){
     for(const code of SECRETS){
@@ -309,13 +340,6 @@ function updateFavicon(url){
       if(ok) return code;
     }
     return null;
-  }
-
-  function mapTitle(url){
-    if(url === 'https://www.clever.com') return 'Clever';
-    if(url === 'https://wwhs.echo-ntn.org') return 'Buzz';
-    if(url === 'about:blank') return 'about:blank';
-    return 'Redirecting';
   }
 
   window.addEventListener('keydown', e=>{
