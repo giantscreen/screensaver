@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<!-- saved from url=(0032)https://novamath.net/movies.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script id="aclib" type="text/javascript" src="./Nova Math_files/aclib.js.download"></script>
+<script type="text/javascript">
+    aclib.runAutoTag({
+        zoneId: 'enegt3nshm',
+    });
+</script>
+<!-- Google tag (gtag.js) -->
+<script async="" src="./Nova Math_files/js"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-L292DLVR4H');
+</script>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nova Math</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="https://novamath.net/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="180x180" href="https://novamath.net/favicon-180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="https://novamath.net/favicon-192.png">
+  <link rel="stylesheet" href="./Nova Math_files/style.css">
+  <link rel="stylesheet" href="./Nova Math_files/all.min.css">
+  <link href="./Nova Math_files/boxicons.min.css" rel="stylesheet">
+
+  <style>
+    #particles-js {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1; background: #000;
+    }
+
+    body, header, nav, input, button {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+
+    header.site-header {
+      position: sticky;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+      background: rgba(25, 25, 25, 0.7);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0.8rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo-img {
+      height: 42px;
+      transition: transform 0.2s ease;
+    }
+    .logo-img:hover { transform: scale(1.05); }
+
+    .nav-center {
+      display: flex;
+      gap: 1.2rem;
+      justify-content: center;
+      flex: 1;
+    }
+    .nav-center a {
+      color: #fff;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.25s ease;
+    }
+    .nav-center a:hover {
+      background: rgba(79,195,247,0.25);
+      border-color: #4FC3F7;
+      box-shadow: 0 0 10px rgba(79,195,247,0.4);
+      transform: translateY(-2px);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    #settings {
+      background: linear-gradient(135deg, #4FC3F7, #2196F3);
+      border: none;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    #settings:hover {
+      transform: rotate(25deg) scale(1.1);
+      box-shadow: 0 0 15px rgba(79,195,247,0.6);
+    }
+
+    .search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-wrapper .search-btn {
+      background: linear-gradient(135deg, #4FC3F7, #2196F3);
+      border: none;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .search-wrapper .search-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(79,195,247,0.6);
+    }
+    .search-wrapper input {
+      position: absolute;
+      right: 50px;
+      width: 0;
+      opacity: 0;
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: width 0.4s ease, opacity 0.3s ease;
+    }
+    .search-wrapper.active input {
+      width: 180px;
+      opacity: 1;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 350px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+    }
+
+    .button-container {
+      position: relative;
+      display: flex;
+      width: 100%;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    button:hover { background: rgba(255,255,255,0.2); }
+    button.active { background: rgba(255,255,255,0.3); font-weight: bold; }
+
+    .slider-indicator {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50%;
+      height: 4px;
+      background: #ffffffaa;
+      border-radius: 2px;
+      transition: left 0.3s;
+    }
+
+    .inputs input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: none;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-size: 14px;
+      outline: none;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+    }
+    .inputs input::placeholder { color: rgba(255,255,255,0.7); }
+    .inputs input:focus { background: rgba(255,255,255,0.25); }
+
+    #goButton {
+      padding: 12px 25px;
+      font-size: 16px;
+      color: white;
+      background: rgba(40, 167, 69, 0.8);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      width: 100%;
+    }
+    #goButton:hover { background: rgb(40, 167, 69); }
+
+    .settings-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index: 10; justify-content: center; align-items: center; }
+    .settings-popup { background: rgba(255,255,255,0.1); backdrop-filter: blur(15px); padding: 20px; border-radius: 15px; width: 300px; color: white; }
+    .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .settings-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; cursor: pointer; border: none; width: 100%; color: white; }
+
+
+.panel-subtitle {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, #1db7e6, #7c4dff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 25px;
+  letter-spacing: 0.3px;
+  animation: textGradientFlow 6s ease infinite;
+  opacity: 0.95;
+}
+
+@keyframes textGradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+  </style>
+</head>
+<body class="dark-mode">
+
+  <div id="particles-js" style="display: block;"><canvas class="particles-js-canvas-el" width="1920" height="868" style="width: 100%; height: 100%;"></canvas></div>
+
+  <header class="site-header" id="mainHeader">
+    <div class="header-content">
+
+      <div class="logo">
+        <img src="./Nova Math_files/logo.png" alt="Logo" class="logo-img">
+      </div>
+
+      
+
+      <div class="header-right">
+        <div class="search-wrapper">
+          <input type="text" id="searchBar" placeholder="Search...">
+        </div>
+        <button id="settings" aria-label="Settings" title="Settings">⚙</button>
+      </div>
+    </div>
+  </header>
+
+
+  <div id="settingsOverlay" class="settings-overlay" aria-hidden="true">
+    <div class="settings-popup">
+      <div class="settings-header">
+        <h3>Settings</h3>
+        <button id="closeSettings" aria-label="Close settings">‎ ‎ ‎ ‎ ‎‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎×</button>
+      </div>
+      <div class="settings-body">
+        <button class="settings-item" id="toggle-particles"><i class="fa-solid fa-toggle-on" style="color: #63E6BE;"></i> Toggle Particles</button>
+        <button class="settings-item" id="switch-background"><i class="fa-solid fa-shuffle" style="color: #4FC3F7;"></i> Switch Background</button>
+        <button class="settings-item" id="tab-cloak"><i class="fa-solid fa-copy"></i> Tab Cloak</button>
+        <button class="settings-item" id="change-particles-color"><i class="fa-solid fa-eye-dropper" style="color: #74C0FC;"></i> Change Particle Color</button>
+        <button class="settings-item" id="toggle-theme"><i class="fa-solid fa-lightbulb" style="color: #FFD43B;"></i> Toggle Color Mode</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="panel-subtitle">To Get Movie ID, Go To The Movie Database, Find The Show/Movie You Want, And The ID Is The Numbers In The URL Bar.</p>
+
+
+  <div class="panel">
+    <div class="button-container">
+      <button id="movieBtn" class="active">Movie</button>
+      <button id="tvshowBtn">TV Show</button>
+      <div class="slider-indicator" style="left: 0px;"></div>
+    </div>
+
+    <div class="inputs">
+      <input type="text" id="showId" placeholder="Enter Movie ID">
+      <input type="text" id="season" placeholder="Season" style="display:none;">
+      <input type="text" id="episode" placeholder="Episode" style="display:none;">
+    </div>
+
+    <button id="goButton" type="button">Go</button>
+  </div>
+
+
+  <script src="./Nova Math_files/particles.min.js.download"></script>
+  <script src="./Nova Math_files/script.js.download"></script>
+  <script>
+let currentType = "movie";
+document.addEventListener("DOMContentLoaded", () => {
+  const movieBtn = document.getElementById("movieBtn");
+  const tvshowBtn = document.getElementById("tvshowBtn");
+  const slider = document.querySelector(".slider-indicator");
+  const goButton = document.getElementById("goButton");
+  const showIdInput = document.getElementById("showId");
+  const seasonInput = document.getElementById("season");
+  const episodeInput = document.getElementById("episode");
+
+  function updateSlider(type) {
+    if (type === "movie") {
+      slider.style.left = "0";
+      movieBtn.classList.add("active");
+      tvshowBtn.classList.remove("active");
+      seasonInput.style.display = "none";
+      episodeInput.style.display = "none";
+      showIdInput.placeholder = "Enter Movie ID";
+      currentType = "movie";
+    } else {
+      slider.style.left = "50%";
+      tvshowBtn.classList.add("active");
+      movieBtn.classList.remove("active");
+      seasonInput.style.display = "block";
+      episodeInput.style.display = "block";
+      showIdInput.placeholder = "Enter TV Show ID";
+      currentType = "tv";
+    }
+  }
+
+  movieBtn.addEventListener("click", () => updateSlider("movie"));
+  tvshowBtn.addEventListener("click", () => updateSlider("tv"));
+
+  goButton.addEventListener("click", () => {
+  const showId = showIdInput.value.trim();
+  const season = seasonInput.value.trim();
+  const episode = episodeInput.value.trim();
+
+  if (!showId) { alert("Enter a Movie or TV Show ID."); return; }
+
+  let url = "";
+  if (currentType === "movie") {
+    url = `https://www.vidking.net/embed/movie/${showId}`;
+  } else if (currentType === "tv") {
+    if (!season || !episode) { alert("Enter Season and Episode."); return; }
+    url = `https://www.vidking.net/embed/tv/${showId}/${season}/${episode}`;
+  }
+
+  const w = window.open("", "_blank");
+  if (!w) { alert("Popup blocked! Allow popups."); return; }
+
+  w.document.body.style.margin = "0";
+  w.document.body.style.height = "100vh";
+
+  const iframe = w.document.createElement("iframe");
+  iframe.src = url;
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
+  iframe.style.border = "none";
+  iframe.allowFullscreen = true;
+
+  w.document.body.appendChild(iframe);
+});
+
+
+
+  updateSlider("movie");
+});
+  </script>
+<script defer="" src="./Nova Math_files/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;83e62e7443e2438e97930be8183d4100&quot;,&quot;r&quot;:1,&quot;server_timing&quot;:{&quot;name&quot;:{&quot;cfCacheStatus&quot;:true,&quot;cfEdge&quot;:true,&quot;cfExtPri&quot;:true,&quot;cfL4&quot;:true,&quot;cfOrigin&quot;:true,&quot;cfSpeedBrain&quot;:true},&quot;location_startswith&quot;:null}}" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+</body></html>
