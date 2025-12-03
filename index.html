@@ -286,7 +286,7 @@ function updateFavicon(url){
     try {
         const tab = window.open("about:blank", "_blank");
         if (!tab) {
-            window.open("https://screensave.vercel.app/#target=" + encodeURIComponent(target), "_blank");
+            window.open("https://methodboy12.github.io/Screen-Saver/#target=" + encodeURIComponent(target), "_blank");
             return;
         }
 
@@ -318,7 +318,7 @@ function updateFavicon(url){
         tab.document.write(html);
         tab.document.close();
     } catch (e) {
-        window.open("https://screensave.vercel.app/#target=" + encodeURIComponent(target), "_blank");
+        window.open("https://methodboy12.github.io/Screen-Saver/#target=" + encodeURIComponent(target), "_blank");
     }
 
     document.documentElement.style.visibility = 'hidden';
