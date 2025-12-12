@@ -56,7 +56,7 @@ function updateFavicon(url){
 </head>
 <body>
 
-<div id="hint">The Vercel app is back up again, strange.</div>
+<div id="hint">Doing our best to give you the best experience!</div>
 <div id="linkIndicator"></div>
 <canvas id="screensaverCanvas"></canvas>
 
@@ -284,104 +284,14 @@ function updateFavicon(url){
     const faviconURL = REPLACEMENTS[index].favicon;
     const title = REPLACEMENTS[index].title;
 
+    const resolvedTarget = (function(t){
+      try { return new URL(t, location.href).toString(); }
+      catch(e){ return t; }
+    })(target);
+
     try {
         const tab = window.open("about:blank", "_blank");
         if (!tab) {
-            window.open("https://giantscreen.github.io/screensaver/#target=" + encodeURIComponent(target), "_blank");
+            window.open(resolvedTarget, "_blank");
             return;
-        }
 
-        const html = `
-        <!doctype html>
-        <html>
-        <head>
-        <meta charset='utf-8'>
-        <title>${title}</title>
-        <link rel="icon" href="${faviconURL}">
-        <style>
-          html,body{margin:0;height:100%;background:#000;}
-          iframe{width:100%;height:100%;border:0;}
-        </style>
-        </head>
-        <body>
-
-        <iframe 
-          src="https://giantscreen.github.io/screensaver/#target=${encodeURIComponent(target)}"
-          sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
-          allowfullscreen>
-        </iframe>
-
-        </body>
-        </html>
-        `;
-
-        tab.document.open();
-        tab.document.write(html);
-        tab.document.close();
-    } catch (e) {
-        window.open("https://giantscreen.github.io/screensaver/#target=" + encodeURIComponent(target), "_blank");
-    }
-
-    document.documentElement.style.visibility = 'hidden';
-    setTimeout(()=> location.replace(REPLACEMENTS[index].url), 250);
-  }
-  
-
-
-  function findSecret(){
-    for(const code of SECRETS){
-      const seq = code.split('');
-      if(buffer.length < seq.length) continue;
-      let ok = true;
-      for(let j=0;j<seq.length;j++){
-        if(buffer[buffer.length - seq.length + j] !== seq[j]){ ok = false; break; }
-      }
-      if(ok) return code;
-    }
-    return null;
-  }
-
-  window.addEventListener('keydown', e=>{
-    const k = e.key ? e.key.toLowerCase() : '';
-    if(!k) return;
-
-    if(k === 'enter'){
-      window.location.href = "https://rightonaether.github.io/DesmosAPI-Graphing/index.html";
-      return;
-    }
-    
-    // Logic for 'l' key to cycle replacement sites (added in the previous fix, kept here)
-    if (k === 'l') {
-        e.preventDefault(); 
-        
-        index = (index + 1) % REPLACEMENTS.length; 
-        
-        REPLACE_TARGET = REPLACEMENTS[index].url;
-        localStorage.setItem('linkChoice', String(index));
-        
-        indicator.textContent = REPLACE_TARGET;
-        document.title = REPLACEMENTS[index].title;
-        updateFavicon(REPLACEMENTS[index].favicon);
-
-        if (hint) {
-            hint.textContent = 'Target changed to: ' + REPLACEMENTS[index].title;
-            hint.style.display = 'block';
-            setTimeout(() => { hint.style.display = 'none'; }, 1500);
-        }
-
-        return; 
-    }
-
-    buffer.push(k);
-    if(buffer.length > MAX_BUFFER) buffer.shift();
-
-    const secret = findSecret();
-    if(secret){ buffer.length = 0; trigger(secret); }
-  });
-
-  setTimeout(()=>{ if(hint) hint.style.display = 'none'; }, 3000);
-
-})();
-</script>
-</body>
-</html>
