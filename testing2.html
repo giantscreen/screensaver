@@ -186,6 +186,42 @@
       border-color: rgba(255, 255, 255, 0.25);
     }
 
+    /* Banned Fullscreen Overlay */
+    .banned-screen {
+      position: fixed;
+      inset: 0;
+      background: #050505;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .banned-title {
+      font-family: var(--font-heading);
+      font-size: 4rem;
+      font-weight: 800;
+      color: var(--danger);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      text-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+    }
+
+    .banned-reason-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 16px 24px;
+      border-radius: 16px;
+      max-width: 500px;
+      margin-top: 16px;
+      color: var(--text-primary);
+      font-size: 1.1rem;
+    }
+
     header {
       padding: 20px 32px;
       display: flex;
@@ -567,7 +603,8 @@
     .message-input:disabled {
       background: rgba(255, 255, 255, 0.05);
       cursor: not-allowed;
-      color: var(--text-muted);
+      color: var(--danger);
+      font-weight: 500;
       border-radius: 6px;
       padding-left: 8px;
     }
@@ -645,6 +682,15 @@
 
   <canvas id="orb-canvas"></canvas>
 
+  <!-- Giant Permanent Banned Screen -->
+  <div id="banned-screen-overlay" class="banned-screen" style="display: none;">
+    <div class="banned-title">PERMANENT</div>
+    <p style="color: var(--text-muted); font-size: 1.2rem;">Your account access has been permanently suspended.</p>
+    <div class="banned-reason-box">
+      <strong>Reason:</strong> <span id="banned-screen-reason">Violation of community terms.</span>
+    </div>
+  </div>
+
   <div class="app-container">
     <div id="auth-overlay" class="modal-overlay active">
       <div class="modal-card">
@@ -654,6 +700,17 @@
         </p>
         <input type="text" id="sign-in-input" class="modal-input" placeholder="Enter username..." maxlength="20" autocomplete="off" />
         <button id="sign-in-btn" class="modal-btn">Enter Chat</button>
+      </div>
+    </div>
+
+    <!-- Live Ban Notification Modal -->
+    <div id="ban-popup-overlay" class="modal-overlay">
+      <div class="modal-card" style="border-color: rgba(239, 68, 68, 0.4);">
+        <h1 class="modal-title" style="color: var(--danger);">Banned</h1>
+        <p class="modal-warning" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #fca5a5;">
+          You have been banned for "<span id="ban-popup-reason">Violating Rules</span>".
+        </p>
+        <button id="ban-leave-btn" class="modal-btn modal-btn-danger">Leave</button>
       </div>
     </div>
 
@@ -699,12 +756,7 @@
         </select>
 
         <label style="font-size: 0.8rem; color: var(--text-muted);">Reason</label>
-        <select id="punish-reason-select" class="modal-select">
-          <option value="Harassment / Bullying">Harassment / Bullying</option>
-          <option value="Spam / Flooding">Spam / Flooding</option>
-          <option value="Inappropriate Language">Inappropriate Language</option>
-          <option value="Severe Rule Violation">Severe Rule Violation</option>
-        </select>
+        <input type="text" id="punish-reason-input" class="modal-input" placeholder="Type reason for ban/timeout..." value="Violation of terms" />
 
         <button id="confirm-punish-btn" class="modal-btn modal-btn-danger">Apply Action</button>
         <button id="cancel-punish-btn" class="modal-btn modal-btn-cancel">Cancel</button>
@@ -796,10 +848,18 @@
         const isBanned = localStorage.getItem('chat_banned');
         if (isBanned === 'true') {
           const banReason = localStorage.getItem('chat_ban_reason') || 'Violation of terms';
-          alert(`[ACCESS DENIED]: You are permanently banned from this website.\nReason: ${banReason}`);
-          window.location.href = 'about:blank';
+          showBannedScreen(banReason);
+          return true;
         }
       } catch(e){}
+      return false;
+    }
+
+    function showBannedScreen(reason) {
+      const bannedOverlay = document.getElementById('banned-screen-overlay');
+      const reasonSpan = document.getElementById('banned-screen-reason');
+      if (reasonSpan) reasonSpan.textContent = reason;
+      if (bannedOverlay) bannedOverlay.style.display = 'flex';
     }
 
     checkBanState();
@@ -924,7 +984,8 @@
       punishTargetUser: null,
       timeoutUntil: 0,
       timeoutReason: "",
-      timeoutTimer: null
+      timeoutTimer: null,
+      pendingBanReason: ""
     };
 
     const DOM = {
@@ -951,7 +1012,7 @@
       punishTargetTitle: id('punish-target-title'),
       punishTypeSelect: id('punish-type-select'),
       punishDurationSelect: id('punish-duration-select'),
-      punishReasonSelect: id('punish-reason-select'),
+      punishReasonInput: id('punish-reason-input'),
       confirmPunishBtn: id('confirm-punish-btn'),
       cancelPunishBtn: id('cancel-punish-btn'),
       reportModal: id('report-modal'),
@@ -964,19 +1025,36 @@
       rulesModal: id('rules-modal'),
       closeRulesBtn: id('close-rules-btn'),
       liveIndicator: id('live-indicator'),
-      liveStatusText: id('live-status-text')
+      liveStatusText: id('live-status-text'),
+      banPopupOverlay: id('ban-popup-overlay'),
+      banPopupReason: id('ban-popup-reason'),
+      banLeaveBtn: id('ban-leave-btn'),
+      bannedScreenOverlay: id('banned-screen-overlay'),
+      bannedScreenReason: id('banned-screen-reason')
     };
 
     function id(name) { return document.getElementById(name); }
 
-    function handleBan(reason) {
+    function triggerBanModal(reason) {
+      state.pendingBanReason = reason || 'Violation of terms';
+      DOM.banPopupReason.textContent = state.pendingBanReason;
+      DOM.banPopupOverlay.classList.add('active');
+    }
+
+    DOM.banLeaveBtn.addEventListener('click', () => {
       try {
         localStorage.setItem('chat_banned', 'true');
-        localStorage.setItem('chat_ban_reason', reason || 'Violation of terms');
+        localStorage.setItem('chat_ban_reason', state.pendingBanReason);
       } catch(e){}
-      alert(`[BANNED]: You have been banned from this site.\nReason: ${reason || 'Violation of terms'}`);
-      window.location.href = 'about:blank';
-    }
+      
+      try {
+        window.close();
+      } catch(e){}
+
+      setTimeout(() => {
+        window.location.href = 'about:blank';
+      }, 200);
+    });
 
     function checkTimeoutState() {
       try {
@@ -1024,7 +1102,7 @@
         DOM.msgInput.disabled = true;
         DOM.sendBtn.disabled = true;
 
-        const updateTooltip = () => {
+        const updateDisplay = () => {
           const rem = state.timeoutUntil - Date.now();
           if (rem <= 0) {
             clearInterval(state.timeoutTimer);
@@ -1036,20 +1114,22 @@
             } catch(e){}
             DOM.msgInput.disabled = false;
             DOM.sendBtn.disabled = false;
+            DOM.msgInput.value = "";
             DOM.msgInput.placeholder = "Message...";
             DOM.msgInput.title = "";
           } else {
-            const statusText = `You are timed out for ${formatTimeRemaining(rem)}. Reason: ${state.timeoutReason}`;
-            DOM.msgInput.placeholder = `Timed Out (${formatTimeRemaining(rem)})`;
-            DOM.msgInput.title = statusText;
+            const timeStr = formatTimeRemaining(rem);
+            DOM.msgInput.value = `timed out for (${timeStr})`;
+            DOM.msgInput.title = `You are timed out for ${timeStr}. Reason: ${state.timeoutReason}`;
           }
         };
 
-        updateTooltip();
-        state.timeoutTimer = setInterval(updateTooltip, 1000);
+        updateDisplay();
+        state.timeoutTimer = setInterval(updateDisplay, 1000);
       } else {
         DOM.msgInput.disabled = false;
         DOM.sendBtn.disabled = false;
+        DOM.msgInput.value = "";
         DOM.msgInput.placeholder = "Message...";
         DOM.msgInput.title = "";
       }
@@ -1104,7 +1184,7 @@
             } else if (data.type === 'USER_PUNISHED') {
               if (data.targetUser === state.username) {
                 if (data.actionType === 'Ban') {
-                  handleBan(data.reason);
+                  triggerBanModal(data.reason);
                 } else if (data.actionType === 'Timeout') {
                   applyTimeout(data.durationMs, data.reason);
                 }
@@ -1256,7 +1336,7 @@
     DOM.confirmPunishBtn.addEventListener('click', () => {
       const type = DOM.punishTypeSelect.value;
       const durationMs = parseInt(DOM.punishDurationSelect.value, 10);
-      const reason = DOM.punishReasonSelect.value;
+      const reason = DOM.punishReasonInput.value.trim() || 'Violation of terms';
 
       LiveChatEngine.sendJSON({
         type: 'ENFORCE_PUNISHMENT',
@@ -1372,6 +1452,8 @@
     }
 
     function processUsernameRequest(targetName) {
+      if (checkBanState()) return;
+
       const cleanName = ProfanityFilter.sanitize(targetName.trim());
       if (!cleanName) return;
 
@@ -1408,6 +1490,8 @@
     }
 
     async function init() {
+      if (checkBanState()) return;
+
       checkTimeoutState();
       initOrbs();
       await SecurityModule.initialize();
