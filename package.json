@@ -1,0 +1,15 @@
+{
+  "name": "e2ee-chat-server",
+  "version": "1.0.0",
+  "description": "Real-time WebSocket backend server for E2EE Web Messenger",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.21.3"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
