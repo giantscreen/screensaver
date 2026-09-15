@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>methodboy12's dungeon</title>
+  <title>Minimal E2EE Web Messenger</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -233,20 +233,33 @@
       gap: 6px;
       font-size: 0.7rem;
       font-weight: 600;
-      color: #10b981;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.25);
       padding: 2px 8px;
       border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .live-indicator.connected {
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.25);
     }
 
     .live-dot {
       width: 6px;
       height: 6px;
-      background: #10b981;
+      background: #ef4444;
       border-radius: 50%;
-      box-shadow: 0 0 8px #10b981;
+      box-shadow: 0 0 8px #ef4444;
       animation: pulse 2s infinite;
+      transition: all 0.3s ease;
+    }
+
+    .live-indicator.connected .live-dot {
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
     }
 
     @keyframes pulse {
@@ -742,7 +755,7 @@
           <span id="user-text-label">---</span>
           <span id="admin-badge" class="admin-badge">ADMIN</span>
         </span>
-        <div class="live-indicator"><span class="live-dot"></span> LIVE</div>
+        <div class="live-indicator" id="live-indicator"><span class="live-dot"></span> <span id="live-status-text">OFFLINE</span></div>
       </div>
       <button id="admin-reports-btn" class="admin-reports-btn">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -954,58 +967,68 @@
       emptyState: id('empty-state'),
       rulesTrigger: id('rules-trigger'),
       rulesModal: id('rules-modal'),
-      closeRulesBtn: id('close-rules-btn')
+      closeRulesBtn: id('close-rules-btn'),
+      liveIndicator: id('live-indicator'),
+      liveStatusText: id('live-status-text')
     };
 
     function id(name) { return document.getElementById(name); }
 
     /**
-     * REAL-TIME LIVE CHAT BROADCAST NETWORK
+     * WEBSOCKET REAL-TIME LIVE CHAT ENGINE
      */
     class LiveChatEngine {
-      static channel = null;
+      static socket = null;
+      static SERVER_URL = 'wss://screensaver-5zv9.onrender.com/';
 
       static init() {
-        try {
-          if ('BroadcastChannel' in window) {
-            this.channel = new BroadcastChannel('live_e2ee_messenger');
-            this.channel.onmessage = async (event) => {
-              if (event.data && event.data.type === 'NEW_MESSAGE') {
-                await this.receiveBroadcastMessage(event.data.msg);
-              } else if (event.data && event.data.type === 'DELETE_MESSAGE') {
-                state.messages.splice(event.data.index, 1);
-                renderVirtualList();
-              }
-            };
-          }
-        } catch(e) {
-          // Fallback if BroadcastChannel is restricted
-        }
+        this.connect();
+      }
 
-        window.addEventListener('storage', async (e) => {
-          if (e.key === 'live_chat_sync' && e.newValue) {
-            try {
-              const payload = JSON.parse(e.newValue);
-              if (payload.action === 'NEW_MSG') {
-                await this.receiveBroadcastMessage(payload.msg);
-              }
-            } catch(err) {}
+      static connect() {
+        this.socket = new WebSocket(this.SERVER_URL);
+
+        this.socket.onopen = () => {
+          DOM.liveIndicator.classList.add('connected');
+          DOM.liveStatusText.textContent = 'LIVE';
+        };
+
+        this.socket.onmessage = async (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'NEW_MESSAGE') {
+              await this.receiveBroadcastMessage(data.msg);
+            } else if (data.type === 'DELETE_MESSAGE') {
+              state.messages.splice(data.index, 1);
+              renderVirtualList();
+            }
+          } catch (e) {
+            console.error('Error processing incoming message:', e);
           }
-        });
+        };
+
+        this.socket.onclose = () => {
+          DOM.liveIndicator.classList.remove('connected');
+          DOM.liveStatusText.textContent = 'OFFLINE';
+          // Auto-reconnect after 3 seconds
+          setTimeout(() => this.connect(), 3000);
+        };
+
+        this.socket.onerror = (error) => {
+          console.error('WebSocket Error:', error);
+          this.socket.close();
+        };
       }
 
       static broadcast(msgData) {
-        if (this.channel) {
-          try { this.channel.postMessage({ type: 'NEW_MESSAGE', msg: msgData }); } catch(e){}
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+          this.socket.send(JSON.stringify({ type: 'NEW_MESSAGE', msg: msgData }));
         }
-        try {
-          localStorage.setItem('live_chat_sync', JSON.stringify({ action: 'NEW_MSG', msg: msgData, ts: Date.now() }));
-        } catch(e){}
       }
 
       static broadcastDelete(index) {
-        if (this.channel) {
-          try { this.channel.postMessage({ type: 'DELETE_MESSAGE', index }); } catch(e){}
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+          this.socket.send(JSON.stringify({ type: 'DELETE_MESSAGE', index }));
         }
       }
 
@@ -1115,10 +1138,8 @@
 
     /* Admin Action Functions */
     window.deleteMessage = function(index) {
-      state.messages.splice(index, 1);
       state.openDropdownIndex = null;
       LiveChatEngine.broadcastDelete(index);
-      renderVirtualList();
     };
 
     window.openPunishModal = function(username) {
@@ -1228,26 +1249,13 @@
 
       const cleanText = ProfanityFilter.sanitize(text);
       const encryptedPayload = await SecurityModule.encrypt(cleanText);
-      const decryptedText = await SecurityModule.decrypt(encryptedPayload);
 
       const msgData = {
         username: state.username,
         encryptedPayload: encryptedPayload
       };
 
-      state.messages.push({
-        ...msgData,
-        decryptedText: decryptedText
-      });
-
       LiveChatEngine.broadcast(msgData);
-
-      renderVirtualList();
-
-      DOM.chatWindow.scrollTo({
-        top: state.messages.length * ITEM_HEIGHT,
-        behavior: 'smooth'
-      });
     }
 
     function processUsernameRequest(targetName) {
