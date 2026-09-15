@@ -568,6 +568,7 @@
       background: rgba(255, 255, 255, 0.02);
       cursor: not-allowed;
       color: var(--text-muted);
+      pointer-events: none;
     }
 
     .timeout-overlay {
@@ -585,6 +586,9 @@
       letter-spacing: 0.03em;
       z-index: 10;
       backdrop-filter: blur(4px);
+      pointer-events: all;
+      cursor: not-allowed;
+      user-select: none;
     }
 
     .timeout-overlay.active {
@@ -615,6 +619,7 @@
       cursor: not-allowed;
       transform: none;
       filter: none;
+      pointer-events: none;
     }
 
     .send-btn svg {
@@ -705,6 +710,15 @@
       border-radius: 16px;
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
+
+    .custom-time-group {
+      display: none;
+      gap: 8px;
+    }
+
+    .custom-time-group.active {
+      display: flex;
+    }
   </style>
 </head>
 <body>
@@ -778,7 +792,17 @@
           <option value="86400000">24 Hours</option>
           <option value="604800000">7 Days</option>
           <option value="-1">Permanent</option>
+          <option value="custom">Custom...</option>
         </select>
+
+        <div id="custom-duration-container" class="custom-time-group">
+          <input type="number" id="punish-custom-val" class="modal-input" placeholder="Amount..." min="1" value="10" />
+          <select id="punish-custom-unit" class="modal-select" style="width: 140px;">
+            <option value="60000">Minutes</option>
+            <option value="3600000">Hours</option>
+            <option value="86400000">Days</option>
+          </select>
+        </div>
 
         <label style="font-size: 0.8rem; color: var(--text-muted);">Preset Reason</label>
         <select id="punish-reason-select" class="modal-select">
@@ -861,7 +885,7 @@
     <footer>
       <div class="input-wrapper">
         <input type="text" id="message-input" class="message-input" placeholder="Message..." autocomplete="off" />
-        <div id="timeout-overlay" class="timeout-overlay">timed out for (10m 00s)</div>
+        <div id="timeout-overlay" class="timeout-overlay">You have been timed out for (10m 00s)</div>
         <button class="send-btn" id="send-btn" aria-label="Send">
           <svg viewBox="0 0 24 24">
             <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -1088,6 +1112,9 @@
       punishTargetTitle: id('punish-target-title'),
       punishTypeSelect: id('punish-type-select'),
       punishDurationSelect: id('punish-duration-select'),
+      customDurationContainer: id('custom-duration-container'),
+      punishCustomVal: id('punish-custom-val'),
+      punishCustomUnit: id('punish-custom-unit'),
       punishReasonSelect: id('punish-reason-select'),
       punishCustomReason: id('punish-custom-reason'),
       confirmPunishBtn: id('confirm-punish-btn'),
@@ -1194,7 +1221,7 @@
             DOM.sendBtn.disabled = false;
             DOM.timeoutOverlay.classList.remove('active');
           } else {
-            DOM.timeoutOverlay.textContent = `timed out for (${formatTimeRemaining(rem)})`;
+            DOM.timeoutOverlay.textContent = `You have been timed out for (${formatTimeRemaining(rem)})`;
           }
         };
 
@@ -1401,14 +1428,33 @@
       state.punishTargetUser = username;
       DOM.punishTargetTitle.textContent = `Action vs: ${username}`;
       DOM.punishCustomReason.value = '';
+      DOM.punishDurationSelect.value = '600000';
+      DOM.customDurationContainer.classList.remove('active');
       DOM.punishModal.classList.add('active');
       state.openDropdownIndex = null;
       renderVirtualList();
     };
 
+    DOM.punishDurationSelect.addEventListener('change', () => {
+      if (DOM.punishDurationSelect.value === 'custom') {
+        DOM.customDurationContainer.classList.add('active');
+      } else {
+        DOM.customDurationContainer.classList.remove('active');
+      }
+    });
+
     DOM.confirmPunishBtn.addEventListener('click', () => {
       const type = DOM.punishTypeSelect.value;
-      const durationMs = parseInt(DOM.punishDurationSelect.value, 10);
+      let durationMs;
+
+      if (DOM.punishDurationSelect.value === 'custom') {
+        const val = parseFloat(DOM.punishCustomVal.value) || 0;
+        const multiplier = parseInt(DOM.punishCustomUnit.value, 10);
+        durationMs = val * multiplier;
+      } else {
+        durationMs = parseInt(DOM.punishDurationSelect.value, 10);
+      }
+
       const customReason = DOM.punishCustomReason.value.trim();
       const reason = customReason || DOM.punishReasonSelect.value;
 
